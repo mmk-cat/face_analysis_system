@@ -1,0 +1,1094 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="utf-8"/>
+    <title id="head-title">pytest-report.html</title>
+      <style type="text/css">body {
+  font-family: Helvetica, Arial, sans-serif;
+  font-size: 12px;
+  /* do not increase min-width as some may use split screens */
+  min-width: 800px;
+  color: #999;
+}
+
+h1 {
+  font-size: 24px;
+  color: black;
+}
+
+h2 {
+  font-size: 16px;
+  color: black;
+}
+
+p {
+  color: black;
+}
+
+a {
+  color: #999;
+}
+
+table {
+  border-collapse: collapse;
+}
+
+/******************************
+ * SUMMARY INFORMATION
+ ******************************/
+#environment td {
+  padding: 5px;
+  border: 1px solid #e6e6e6;
+  vertical-align: top;
+}
+#environment tr:nth-child(odd) {
+  background-color: #f6f6f6;
+}
+#environment ul {
+  margin: 0;
+  padding: 0 20px;
+}
+
+/******************************
+ * TEST RESULT COLORS
+ ******************************/
+span.passed,
+.passed .col-result {
+  color: green;
+}
+
+span.skipped,
+span.xfailed,
+span.rerun,
+.skipped .col-result,
+.xfailed .col-result,
+.rerun .col-result {
+  color: orange;
+}
+
+span.error,
+span.failed,
+span.xpassed,
+.error .col-result,
+.failed .col-result,
+.xpassed .col-result {
+  color: red;
+}
+
+.col-links__extra {
+  margin-right: 3px;
+}
+
+/******************************
+ * RESULTS TABLE
+ *
+ * 1. Table Layout
+ * 2. Extra
+ * 3. Sorting items
+ *
+ ******************************/
+/*------------------
+ * 1. Table Layout
+ *------------------*/
+#results-table {
+  border: 1px solid #e6e6e6;
+  color: #999;
+  font-size: 12px;
+  width: 100%;
+}
+#results-table th,
+#results-table td {
+  padding: 5px;
+  border: 1px solid #e6e6e6;
+  text-align: left;
+}
+#results-table th {
+  font-weight: bold;
+}
+
+/*------------------
+ * 2. Extra
+ *------------------*/
+.logwrapper {
+  max-height: 230px;
+  overflow-y: scroll;
+  background-color: #e6e6e6;
+}
+.logwrapper.expanded {
+  max-height: none;
+}
+.logwrapper.expanded .logexpander:after {
+  content: "collapse [-]";
+}
+.logwrapper .logexpander {
+  z-index: 1;
+  position: sticky;
+  top: 10px;
+  width: max-content;
+  border: 1px solid;
+  border-radius: 3px;
+  padding: 5px 7px;
+  margin: 10px 0 10px calc(100% - 80px);
+  cursor: pointer;
+  background-color: #e6e6e6;
+}
+.logwrapper .logexpander:after {
+  content: "expand [+]";
+}
+.logwrapper .logexpander:hover {
+  color: #000;
+  border-color: #000;
+}
+.logwrapper .log {
+  min-height: 40px;
+  position: relative;
+  top: -50px;
+  height: calc(100% + 50px);
+  border: 1px solid #e6e6e6;
+  color: black;
+  display: block;
+  font-family: "Courier New", Courier, monospace;
+  padding: 5px;
+  padding-right: 80px;
+  white-space: pre-wrap;
+}
+
+div.media {
+  border: 1px solid #e6e6e6;
+  float: right;
+  height: 240px;
+  margin: 0 5px;
+  overflow: hidden;
+  width: 320px;
+}
+
+.media-container {
+  display: grid;
+  grid-template-columns: 25px auto 25px;
+  align-items: center;
+  flex: 1 1;
+  overflow: hidden;
+  height: 200px;
+}
+
+.media-container--fullscreen {
+  grid-template-columns: 0px auto 0px;
+}
+
+.media-container__nav--right,
+.media-container__nav--left {
+  text-align: center;
+  cursor: pointer;
+}
+
+.media-container__viewport {
+  cursor: pointer;
+  text-align: center;
+  height: inherit;
+}
+.media-container__viewport img,
+.media-container__viewport video {
+  object-fit: cover;
+  width: 100%;
+  max-height: 100%;
+}
+
+.media__name,
+.media__counter {
+  display: flex;
+  flex-direction: row;
+  justify-content: space-around;
+  flex: 0 0 25px;
+  align-items: center;
+}
+
+.collapsible td:not(.col-links) {
+  cursor: pointer;
+}
+.collapsible td:not(.col-links):hover::after {
+  color: #bbb;
+  font-style: italic;
+  cursor: pointer;
+}
+
+.col-result {
+  width: 130px;
+}
+.col-result:hover::after {
+  content: " (hide details)";
+}
+
+.col-result.collapsed:hover::after {
+  content: " (show details)";
+}
+
+#environment-header h2:hover::after {
+  content: " (hide details)";
+  color: #bbb;
+  font-style: italic;
+  cursor: pointer;
+  font-size: 12px;
+}
+
+#environment-header.collapsed h2:hover::after {
+  content: " (show details)";
+  color: #bbb;
+  font-style: italic;
+  cursor: pointer;
+  font-size: 12px;
+}
+
+/*------------------
+ * 3. Sorting items
+ *------------------*/
+.sortable {
+  cursor: pointer;
+}
+.sortable.desc:after {
+  content: " ";
+  position: relative;
+  left: 5px;
+  bottom: -12.5px;
+  border: 10px solid #4caf50;
+  border-bottom: 0;
+  border-left-color: transparent;
+  border-right-color: transparent;
+}
+.sortable.asc:after {
+  content: " ";
+  position: relative;
+  left: 5px;
+  bottom: 12.5px;
+  border: 10px solid #4caf50;
+  border-top: 0;
+  border-left-color: transparent;
+  border-right-color: transparent;
+}
+
+.hidden, .summary__reload__button.hidden {
+  display: none;
+}
+
+.summary__data {
+  flex: 0 0 550px;
+}
+.summary__reload {
+  flex: 1 1;
+  display: flex;
+  justify-content: center;
+}
+.summary__reload__button {
+  flex: 0 0 300px;
+  display: flex;
+  color: white;
+  font-weight: bold;
+  background-color: #4caf50;
+  text-align: center;
+  justify-content: center;
+  align-items: center;
+  border-radius: 3px;
+  cursor: pointer;
+}
+.summary__reload__button:hover {
+  background-color: #46a049;
+}
+.summary__spacer {
+  flex: 0 0 550px;
+}
+
+.controls {
+  display: flex;
+  justify-content: space-between;
+}
+
+.filters,
+.collapse {
+  display: flex;
+  align-items: center;
+}
+.filters button,
+.collapse button {
+  color: #999;
+  border: none;
+  background: none;
+  cursor: pointer;
+  text-decoration: underline;
+}
+.filters button:hover,
+.collapse button:hover {
+  color: #ccc;
+}
+
+.filter__label {
+  margin-right: 10px;
+}
+
+      </style>
+    
+  </head>
+  <body>
+    <h1 id="title">pytest-report.html</h1>
+    <p>Report generated on 05-Nov-2026 at 22:47:22 by <a href="https://pypi.python.org/pypi/pytest-html">pytest-html</a>
+        v4.2.0</p>
+    <div id="environment-header">
+      <h2>Environment</h2>
+    </div>
+    <table id="environment"></table>
+    <!-- TEMPLATES -->
+      <template id="template_environment_row">
+      <tr>
+        <td></td>
+        <td></td>
+      </tr>
+    </template>
+    <template id="template_results-table__body--empty">
+      <tbody class="results-table-row">
+        <tr id="not-found-message">
+          <td colspan="4">No results found. Check the filters.</td>
+        </tr>
+      </tbody>
+    </template>
+    <template id="template_results-table__tbody">
+      <tbody class="results-table-row">
+        <tr class="collapsible">
+        </tr>
+        <tr class="extras-row">
+          <td class="extra" colspan="4">
+            <div class="extraHTML"></div>
+            <div class="media">
+              <div class="media-container">
+                  <div class="media-container__nav--left">&lt;</div>
+                  <div class="media-container__viewport">
+                    <img src="" />
+                    <video controls>
+                      <source src="" type="video/mp4">
+                    </video>
+                  </div>
+                  <div class="media-container__nav--right">&gt;</div>
+                </div>
+                <div class="media__name"></div>
+                <div class="media__counter"></div>
+            </div>
+            <div class="logwrapper">
+              <div class="logexpander"></div>
+              <div class="log"></div>
+            </div>
+          </td>
+        </tr>
+      </tbody>
+    </template>
+    <!-- END TEMPLATES -->
+    <div class="summary">
+      <div class="summary__data">
+        <h2>Summary</h2>
+        <div class="additional-summary prefix">
+        </div>
+        <p class="run-count">72 tests took 00:00:03.</p>
+        <p class="filter">(Un)check the boxes to filter the results.</p>
+        <div class="summary__reload">
+          <div class="summary__reload__button hidden" onclick="location.reload()">
+            <div>There are still tests running. <br />Reload this page to get the latest results!</div>
+          </div>
+        </div>
+        <div class="summary__spacer"></div>
+        <div class="controls">
+          <div class="filters">
+            <input checked="true" class="filter" name="filter_checkbox" type="checkbox" data-test-result="failed" disabled>
+            <span class="failed">0 Failed,</span>
+            <input checked="true" class="filter" name="filter_checkbox" type="checkbox" data-test-result="passed" >
+            <span class="passed">72 Passed,</span>
+            <input checked="true" class="filter" name="filter_checkbox" type="checkbox" data-test-result="skipped" disabled>
+            <span class="skipped">0 Skipped,</span>
+            <input checked="true" class="filter" name="filter_checkbox" type="checkbox" data-test-result="xfailed" disabled>
+            <span class="xfailed">0 Expected failures,</span>
+            <input checked="true" class="filter" name="filter_checkbox" type="checkbox" data-test-result="xpassed" disabled>
+            <span class="xpassed">0 Unexpected passes,</span>
+            <input checked="true" class="filter" name="filter_checkbox" type="checkbox" data-test-result="error" disabled>
+            <span class="error">0 Errors,</span>
+            <input checked="true" class="filter" name="filter_checkbox" type="checkbox" data-test-result="rerun" disabled>
+            <span class="rerun">0 Reruns</span>
+            <input checked="true" class="filter" name="filter_checkbox" type="checkbox" data-test-result="retried" disabled>
+            <span class="retried">0 Retried,</span>
+          </div>
+          <div class="collapse">
+            <button id="show_all_details">Show all details</button>&nbsp;/&nbsp;<button id="hide_all_details">Hide all details</button>
+          </div>
+        </div>
+      </div>
+      <div class="additional-summary summary">
+      </div>
+      <div class="additional-summary postfix">
+      </div>
+    </div>
+    <table id="results-table">
+      <thead id="results-table-head">
+        <tr>
+          <th class="sortable" data-column-type="result">Result</th>
+          <th class="sortable" data-column-type="testId">Test</th>
+          <th class="sortable" data-column-type="duration">Duration</th>
+          <th>Links</th>
+        </tr>
+      </thead>
+    </table>
+  <footer>
+    <div id="data-container" data-jsonblob="{&#34;environment&#34;: {&#34;Python&#34;: &#34;3.12.10&#34;, &#34;Platform&#34;: &#34;Windows-11-10.0.22631-SP0&#34;, &#34;Packages&#34;: {&#34;pytest&#34;: &#34;9.2.0&#34;, &#34;pluggy&#34;: &#34;1.7.0&#34;}, &#34;Plugins&#34;: {&#34;allure-pytest&#34;: &#34;2.16.2&#34;, &#34;html&#34;: &#34;4.2.0&#34;, &#34;metadata&#34;: &#34;3.1.1&#34;}, &#34;JAVA_HOME&#34;: &#34;C:\\Program Files\\Microsoft\\jdk-21.0.12.101-hotspot\\&#34;}, &#34;tests&#34;: {&#34;tests/test_analyze.py::test_analyze_default_attributes&#34;: [{&#34;extras&#34;: [], &#34;result&#34;: &#34;Passed&#34;, &#34;testId&#34;: &#34;tests/test_analyze.py::test_analyze_default_attributes&#34;, &#34;duration&#34;: &#34;144 ms&#34;, &#34;resultsTableRow&#34;: [&#34;&lt;td class=\&#34;col-result\&#34;&gt;Passed&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-testId\&#34;&gt;tests/test_analyze.py::test_analyze_default_attributes&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-duration\&#34;&gt;144 ms&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-links\&#34;&gt;&lt;/td&gt;&#34;], &#34;log&#34;: &#34;---------------------------- Captured stdout setup -----------------------------\n2026-11-05 22:47:19,836 INFO face_service [-] Face service started env=test provider=iflytek db=C:\\Users\\LENOVO\\AppData\\Local\\Temp\\pytest-of-LENOVO\\pytest-7\\face-api0\\face.db\n\n----------------------------- Captured stdout call -----------------------------\n2026-11-05 22:47:19,926 INFO face_service [fac00885b6d047d9b41fc4940e4415a9] POST /api/v1/face/analyze -&amp;gt; 200 79.08ms\n\n------------------------------ Captured log call -------------------------------\nINFO     werkzeug:_internal.py:97 127.0.0.1 - - [05/Nov/2026 22:47:19] &amp;quot;POST /v1/service/v1/image_identify/face_detect HTTP/1.1&amp;quot; 200 -\nINFO     werkzeug:_internal.py:97 127.0.0.1 - - [05/Nov/2026 22:47:19] &amp;quot;POST /v1/service/v1/image_identify/face_analysis HTTP/1.1&amp;quot; 200 -\nINFO     face_service:__init__.py:123 POST /api/v1/face/analyze -&amp;gt; 200 79.08ms\nINFO     werkzeug:_internal.py:97 127.0.0.1 - - [05/Nov/2026 22:47:19] &amp;quot;POST /api/v1/face/analyze HTTP/1.1&amp;quot; 200 -\n\n&#34;}], &#34;tests/test_analyze.py::test_analyze_selected_attributes&#34;: [{&#34;extras&#34;: [], &#34;result&#34;: &#34;Passed&#34;, &#34;testId&#34;: &#34;tests/test_analyze.py::test_analyze_selected_attributes&#34;, &#34;duration&#34;: &#34;62 ms&#34;, &#34;resultsTableRow&#34;: [&#34;&lt;td class=\&#34;col-result\&#34;&gt;Passed&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-testId\&#34;&gt;tests/test_analyze.py::test_analyze_selected_attributes&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-duration\&#34;&gt;62 ms&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-links\&#34;&gt;&lt;/td&gt;&#34;], &#34;log&#34;: &#34;----------------------------- Captured stdout call -----------------------------\n2026-11-05 22:47:19,995 INFO face_service [531625d3289a4447ab8c213ae016e315] POST /api/v1/face/analyze -&amp;gt; 200 47.89ms\n\n------------------------------ Captured log call -------------------------------\nINFO     werkzeug:_internal.py:97 127.0.0.1 - - [05/Nov/2026 22:47:19] &amp;quot;POST /v1/service/v1/image_identify/face_detect HTTP/1.1&amp;quot; 200 -\nINFO     werkzeug:_internal.py:97 127.0.0.1 - - [05/Nov/2026 22:47:19] &amp;quot;POST /v1/service/v1/image_identify/face_analysis HTTP/1.1&amp;quot; 200 -\nINFO     face_service:__init__.py:123 POST /api/v1/face/analyze -&amp;gt; 200 47.89ms\nINFO     werkzeug:_internal.py:97 127.0.0.1 - - [05/Nov/2026 22:47:19] &amp;quot;POST /api/v1/face/analyze HTTP/1.1&amp;quot; 200 -\n\n&#34;}], &#34;tests/test_analyze.py::test_analyze_missing_image&#34;: [{&#34;extras&#34;: [], &#34;result&#34;: &#34;Passed&#34;, &#34;testId&#34;: &#34;tests/test_analyze.py::test_analyze_missing_image&#34;, &#34;duration&#34;: &#34;3 ms&#34;, &#34;resultsTableRow&#34;: [&#34;&lt;td class=\&#34;col-result\&#34;&gt;Passed&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-testId\&#34;&gt;tests/test_analyze.py::test_analyze_missing_image&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-duration\&#34;&gt;3 ms&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-links\&#34;&gt;&lt;/td&gt;&#34;], &#34;log&#34;: &#34;----------------------------- Captured stdout call -----------------------------\n2026-11-05 22:47:20,000 INFO face_service [d82f1522b9ed4b7fa90fb0f9e572553d] POST /api/v1/face/analyze -&amp;gt; 400 0.10ms\n\n------------------------------ Captured log call -------------------------------\nINFO     face_service:__init__.py:123 POST /api/v1/face/analyze -&amp;gt; 400 0.10ms\nINFO     werkzeug:_internal.py:97 127.0.0.1 - - [05/Nov/2026 22:47:20] &amp;quot;POST /api/v1/face/analyze HTTP/1.1&amp;quot; 400 -\n\n&#34;}], &#34;tests/test_analyze.py::test_analyze_malformed_attributes&#34;: [{&#34;extras&#34;: [], &#34;result&#34;: &#34;Passed&#34;, &#34;testId&#34;: &#34;tests/test_analyze.py::test_analyze_malformed_attributes&#34;, &#34;duration&#34;: &#34;4 ms&#34;, &#34;resultsTableRow&#34;: [&#34;&lt;td class=\&#34;col-result\&#34;&gt;Passed&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-testId\&#34;&gt;tests/test_analyze.py::test_analyze_malformed_attributes&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-duration\&#34;&gt;4 ms&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-links\&#34;&gt;&lt;/td&gt;&#34;], &#34;log&#34;: &#34;----------------------------- Captured stdout call -----------------------------\n2026-11-05 22:47:20,004 INFO face_service [4c4c22285b254dc0a99171d12e0fa4c0] POST /api/v1/face/analyze -&amp;gt; 400 0.69ms\n\n------------------------------ Captured log call -------------------------------\nINFO     face_service:__init__.py:123 POST /api/v1/face/analyze -&amp;gt; 400 0.69ms\nINFO     werkzeug:_internal.py:97 127.0.0.1 - - [05/Nov/2026 22:47:20] &amp;quot;POST /api/v1/face/analyze HTTP/1.1&amp;quot; 400 -\n\n&#34;}], &#34;tests/test_analyze.py::test_analyze_attributes_not_list&#34;: [{&#34;extras&#34;: [], &#34;result&#34;: &#34;Passed&#34;, &#34;testId&#34;: &#34;tests/test_analyze.py::test_analyze_attributes_not_list&#34;, &#34;duration&#34;: &#34;4 ms&#34;, &#34;resultsTableRow&#34;: [&#34;&lt;td class=\&#34;col-result\&#34;&gt;Passed&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-testId\&#34;&gt;tests/test_analyze.py::test_analyze_attributes_not_list&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-duration\&#34;&gt;4 ms&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-links\&#34;&gt;&lt;/td&gt;&#34;], &#34;log&#34;: &#34;----------------------------- Captured stdout call -----------------------------\n2026-11-05 22:47:20,009 INFO face_service [30e11bf808384657abab0a0457877927] POST /api/v1/face/analyze -&amp;gt; 400 0.58ms\n\n------------------------------ Captured log call -------------------------------\nINFO     face_service:__init__.py:123 POST /api/v1/face/analyze -&amp;gt; 400 0.58ms\nINFO     werkzeug:_internal.py:97 127.0.0.1 - - [05/Nov/2026 22:47:20] &amp;quot;POST /api/v1/face/analyze HTTP/1.1&amp;quot; 400 -\n\n&#34;}], &#34;tests/test_analyze.py::test_analyze_unknown_attribute&#34;: [{&#34;extras&#34;: [], &#34;result&#34;: &#34;Passed&#34;, &#34;testId&#34;: &#34;tests/test_analyze.py::test_analyze_unknown_attribute&#34;, &#34;duration&#34;: &#34;4 ms&#34;, &#34;resultsTableRow&#34;: [&#34;&lt;td class=\&#34;col-result\&#34;&gt;Passed&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-testId\&#34;&gt;tests/test_analyze.py::test_analyze_unknown_attribute&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-duration\&#34;&gt;4 ms&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-links\&#34;&gt;&lt;/td&gt;&#34;], &#34;log&#34;: &#34;----------------------------- Captured stdout call -----------------------------\n2026-11-05 22:47:20,013 INFO face_service [0312e24de14c449b98fddaa01e8efa7e] POST /api/v1/face/analyze -&amp;gt; 400 0.58ms\n\n------------------------------ Captured log call -------------------------------\nINFO     face_service:__init__.py:123 POST /api/v1/face/analyze -&amp;gt; 400 0.58ms\nINFO     werkzeug:_internal.py:97 127.0.0.1 - - [05/Nov/2026 22:47:20] &amp;quot;POST /api/v1/face/analyze HTTP/1.1&amp;quot; 400 -\n\n&#34;}], &#34;tests/test_analyze.py::test_analyze_empty_file&#34;: [{&#34;extras&#34;: [], &#34;result&#34;: &#34;Passed&#34;, &#34;testId&#34;: &#34;tests/test_analyze.py::test_analyze_empty_file&#34;, &#34;duration&#34;: &#34;3 ms&#34;, &#34;resultsTableRow&#34;: [&#34;&lt;td class=\&#34;col-result\&#34;&gt;Passed&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-testId\&#34;&gt;tests/test_analyze.py::test_analyze_empty_file&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-duration\&#34;&gt;3 ms&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-links\&#34;&gt;&lt;/td&gt;&#34;], &#34;log&#34;: &#34;----------------------------- Captured stdout call -----------------------------\n2026-11-05 22:47:20,017 INFO face_service [a2c761cfcb8f42c8a5aec1ec3fefeeb7] POST /api/v1/face/analyze -&amp;gt; 400 0.44ms\n\n------------------------------ Captured log call -------------------------------\nINFO     face_service:__init__.py:123 POST /api/v1/face/analyze -&amp;gt; 400 0.44ms\nINFO     werkzeug:_internal.py:97 127.0.0.1 - - [05/Nov/2026 22:47:20] &amp;quot;POST /api/v1/face/analyze HTTP/1.1&amp;quot; 400 -\n\n&#34;}], &#34;tests/test_analyze.py::test_analyze_oversized_image&#34;: [{&#34;extras&#34;: [], &#34;result&#34;: &#34;Passed&#34;, &#34;testId&#34;: &#34;tests/test_analyze.py::test_analyze_oversized_image&#34;, &#34;duration&#34;: &#34;19 ms&#34;, &#34;resultsTableRow&#34;: [&#34;&lt;td class=\&#34;col-result\&#34;&gt;Passed&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-testId\&#34;&gt;tests/test_analyze.py::test_analyze_oversized_image&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-duration\&#34;&gt;19 ms&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-links\&#34;&gt;&lt;/td&gt;&#34;], &#34;log&#34;: &#34;----------------------------- Captured stdout call -----------------------------\n2026-11-05 22:47:20,037 INFO face_service [516afa41aea3431489ac6cf64604d6f5] POST /api/v1/face/analyze -&amp;gt; 413 14.68ms\n\n------------------------------ Captured log call -------------------------------\nINFO     face_service:__init__.py:123 POST /api/v1/face/analyze -&amp;gt; 413 14.68ms\nINFO     werkzeug:_internal.py:97 127.0.0.1 - - [05/Nov/2026 22:47:20] &amp;quot;POST /api/v1/face/analyze HTTP/1.1&amp;quot; 413 -\n\n&#34;}], &#34;tests/test_analyze.py::test_analyze_requires_api_key&#34;: [{&#34;extras&#34;: [], &#34;result&#34;: &#34;Passed&#34;, &#34;testId&#34;: &#34;tests/test_analyze.py::test_analyze_requires_api_key&#34;, &#34;duration&#34;: &#34;16 ms&#34;, &#34;resultsTableRow&#34;: [&#34;&lt;td class=\&#34;col-result\&#34;&gt;Passed&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-testId\&#34;&gt;tests/test_analyze.py::test_analyze_requires_api_key&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-duration\&#34;&gt;16 ms&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-links\&#34;&gt;&lt;/td&gt;&#34;], &#34;log&#34;: &#34;----------------------------- Captured stdout call -----------------------------\n2026-11-05 22:47:20,054 INFO face_service [98b450b782474a60ae86901b97bc8913] POST /api/v1/face/analyze -&amp;gt; 401 0.07ms\n\n------------------------------ Captured log call -------------------------------\nINFO     face_service:__init__.py:123 POST /api/v1/face/analyze -&amp;gt; 401 0.07ms\nINFO     werkzeug:_internal.py:97 127.0.0.1 - - [05/Nov/2026 22:47:20] &amp;quot;POST /api/v1/face/analyze HTTP/1.1&amp;quot; 401 -\n\n&#34;}], &#34;tests/test_analyze.py::test_analyze_duplicate_key_replays&#34;: [{&#34;extras&#34;: [], &#34;result&#34;: &#34;Passed&#34;, &#34;testId&#34;: &#34;tests/test_analyze.py::test_analyze_duplicate_key_replays&#34;, &#34;duration&#34;: &#34;90 ms&#34;, &#34;resultsTableRow&#34;: [&#34;&lt;td class=\&#34;col-result\&#34;&gt;Passed&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-testId\&#34;&gt;tests/test_analyze.py::test_analyze_duplicate_key_replays&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-duration\&#34;&gt;90 ms&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-links\&#34;&gt;&lt;/td&gt;&#34;], &#34;log&#34;: &#34;----------------------------- Captured stdout call -----------------------------\n2026-11-05 22:47:20,130 INFO face_service [b56d1fe3896847b5a4a52d73bf5b3460] POST /api/v1/face/analyze -&amp;gt; 200 69.71ms\n2026-11-05 22:47:20,143 INFO face_service [a3d586f2c95449c09be776fda75afc56] POST /api/v1/face/analyze -&amp;gt; 200 8.91ms\n\n------------------------------ Captured log call -------------------------------\nINFO     werkzeug:_internal.py:97 127.0.0.1 - - [05/Nov/2026 22:47:20] &amp;quot;GET /stats HTTP/1.1&amp;quot; 200 -\nINFO     werkzeug:_internal.py:97 127.0.0.1 - - [05/Nov/2026 22:47:20] &amp;quot;POST /v1/service/v1/image_identify/face_detect HTTP/1.1&amp;quot; 200 -\nINFO     werkzeug:_internal.py:97 127.0.0.1 - - [05/Nov/2026 22:47:20] &amp;quot;POST /v1/service/v1/image_identify/face_analysis HTTP/1.1&amp;quot; 200 -\nINFO     face_service:__init__.py:123 POST /api/v1/face/analyze -&amp;gt; 200 69.71ms\nINFO     werkzeug:_internal.py:97 127.0.0.1 - - [05/Nov/2026 22:47:20] &amp;quot;POST /api/v1/face/analyze HTTP/1.1&amp;quot; 200 -\nINFO     face_service:__init__.py:123 POST /api/v1/face/analyze -&amp;gt; 200 8.91ms\nINFO     werkzeug:_internal.py:97 127.0.0.1 - - [05/Nov/2026 22:47:20] &amp;quot;POST /api/v1/face/analyze HTTP/1.1&amp;quot; 200 -\nINFO     werkzeug:_internal.py:97 127.0.0.1 - - [05/Nov/2026 22:47:20] &amp;quot;GET /stats HTTP/1.1&amp;quot; 200 -\n\n&#34;}], &#34;tests/test_compare.py::test_compare_same_image&#34;: [{&#34;extras&#34;: [], &#34;result&#34;: &#34;Passed&#34;, &#34;testId&#34;: &#34;tests/test_compare.py::test_compare_same_image&#34;, &#34;duration&#34;: &#34;27 ms&#34;, &#34;resultsTableRow&#34;: [&#34;&lt;td class=\&#34;col-result\&#34;&gt;Passed&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-testId\&#34;&gt;tests/test_compare.py::test_compare_same_image&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-duration\&#34;&gt;27 ms&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-links\&#34;&gt;&lt;/td&gt;&#34;], &#34;log&#34;: &#34;----------------------------- Captured stdout call -----------------------------\n2026-11-05 22:47:20,174 INFO face_service [7b51180e0d5d49b8b7317cdc5fd5928b] POST /api/v1/face/compare -&amp;gt; 200 23.64ms\n\n------------------------------ Captured log call -------------------------------\nINFO     werkzeug:_internal.py:97 127.0.0.1 - - [05/Nov/2026 22:47:20] &amp;quot;POST /v1/service/v1/image_identify/face_compare HTTP/1.1&amp;quot; 200 -\nINFO     face_service:__init__.py:123 POST /api/v1/face/compare -&amp;gt; 200 23.64ms\nINFO     werkzeug:_internal.py:97 127.0.0.1 - - [05/Nov/2026 22:47:20] &amp;quot;POST /api/v1/face/compare HTTP/1.1&amp;quot; 200 -\n\n&#34;}], &#34;tests/test_compare.py::test_compare_different_images&#34;: [{&#34;extras&#34;: [], &#34;result&#34;: &#34;Passed&#34;, &#34;testId&#34;: &#34;tests/test_compare.py::test_compare_different_images&#34;, &#34;duration&#34;: &#34;28 ms&#34;, &#34;resultsTableRow&#34;: [&#34;&lt;td class=\&#34;col-result\&#34;&gt;Passed&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-testId\&#34;&gt;tests/test_compare.py::test_compare_different_images&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-duration\&#34;&gt;28 ms&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-links\&#34;&gt;&lt;/td&gt;&#34;], &#34;log&#34;: &#34;----------------------------- Captured stdout call -----------------------------\n2026-11-05 22:47:20,201 INFO face_service [1b0ba3b3c9fa409bb0c1c1b297fe190b] POST /api/v1/face/compare -&amp;gt; 200 24.17ms\n\n------------------------------ Captured log call -------------------------------\nINFO     werkzeug:_internal.py:97 127.0.0.1 - - [05/Nov/2026 22:47:20] &amp;quot;POST /v1/service/v1/image_identify/face_compare HTTP/1.1&amp;quot; 200 -\nINFO     face_service:__init__.py:123 POST /api/v1/face/compare -&amp;gt; 200 24.17ms\nINFO     werkzeug:_internal.py:97 127.0.0.1 - - [05/Nov/2026 22:47:20] &amp;quot;POST /api/v1/face/compare HTTP/1.1&amp;quot; 200 -\n\n&#34;}], &#34;tests/test_compare.py::test_compare_missing_image_a&#34;: [{&#34;extras&#34;: [], &#34;result&#34;: &#34;Passed&#34;, &#34;testId&#34;: &#34;tests/test_compare.py::test_compare_missing_image_a&#34;, &#34;duration&#34;: &#34;4 ms&#34;, &#34;resultsTableRow&#34;: [&#34;&lt;td class=\&#34;col-result\&#34;&gt;Passed&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-testId\&#34;&gt;tests/test_compare.py::test_compare_missing_image_a&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-duration\&#34;&gt;4 ms&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-links\&#34;&gt;&lt;/td&gt;&#34;], &#34;log&#34;: &#34;----------------------------- Captured stdout call -----------------------------\n2026-11-05 22:47:20,207 INFO face_service [e145dbeb100d45fc8ab4f46735fbfae2] POST /api/v1/face/compare -&amp;gt; 400 0.49ms\n\n------------------------------ Captured log call -------------------------------\nINFO     face_service:__init__.py:123 POST /api/v1/face/compare -&amp;gt; 400 0.49ms\nINFO     werkzeug:_internal.py:97 127.0.0.1 - - [05/Nov/2026 22:47:20] &amp;quot;POST /api/v1/face/compare HTTP/1.1&amp;quot; 400 -\n\n&#34;}], &#34;tests/test_compare.py::test_compare_missing_image_b&#34;: [{&#34;extras&#34;: [], &#34;result&#34;: &#34;Passed&#34;, &#34;testId&#34;: &#34;tests/test_compare.py::test_compare_missing_image_b&#34;, &#34;duration&#34;: &#34;3 ms&#34;, &#34;resultsTableRow&#34;: [&#34;&lt;td class=\&#34;col-result\&#34;&gt;Passed&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-testId\&#34;&gt;tests/test_compare.py::test_compare_missing_image_b&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-duration\&#34;&gt;3 ms&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-links\&#34;&gt;&lt;/td&gt;&#34;], &#34;log&#34;: &#34;----------------------------- Captured stdout call -----------------------------\n2026-11-05 22:47:20,211 INFO face_service [d25e2f5519014381a994e75e9efbafb7] POST /api/v1/face/compare -&amp;gt; 400 0.58ms\n\n------------------------------ Captured log call -------------------------------\nINFO     face_service:__init__.py:123 POST /api/v1/face/compare -&amp;gt; 400 0.58ms\nINFO     werkzeug:_internal.py:97 127.0.0.1 - - [05/Nov/2026 22:47:20] &amp;quot;POST /api/v1/face/compare HTTP/1.1&amp;quot; 400 -\n\n&#34;}], &#34;tests/test_compare.py::test_compare_empty_image_b&#34;: [{&#34;extras&#34;: [], &#34;result&#34;: &#34;Passed&#34;, &#34;testId&#34;: &#34;tests/test_compare.py::test_compare_empty_image_b&#34;, &#34;duration&#34;: &#34;3 ms&#34;, &#34;resultsTableRow&#34;: [&#34;&lt;td class=\&#34;col-result\&#34;&gt;Passed&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-testId\&#34;&gt;tests/test_compare.py::test_compare_empty_image_b&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-duration\&#34;&gt;3 ms&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-links\&#34;&gt;&lt;/td&gt;&#34;], &#34;log&#34;: &#34;----------------------------- Captured stdout call -----------------------------\n2026-11-05 22:47:20,216 INFO face_service [a78033641a7f48248b7a73f02473e7d5] POST /api/v1/face/compare -&amp;gt; 400 0.56ms\n\n------------------------------ Captured log call -------------------------------\nINFO     face_service:__init__.py:123 POST /api/v1/face/compare -&amp;gt; 400 0.56ms\nINFO     werkzeug:_internal.py:97 127.0.0.1 - - [05/Nov/2026 22:47:20] &amp;quot;POST /api/v1/face/compare HTTP/1.1&amp;quot; 400 -\n\n&#34;}], &#34;tests/test_compare.py::test_compare_invalid_image_a&#34;: [{&#34;extras&#34;: [], &#34;result&#34;: &#34;Passed&#34;, &#34;testId&#34;: &#34;tests/test_compare.py::test_compare_invalid_image_a&#34;, &#34;duration&#34;: &#34;103 ms&#34;, &#34;resultsTableRow&#34;: [&#34;&lt;td class=\&#34;col-result\&#34;&gt;Passed&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-testId\&#34;&gt;tests/test_compare.py::test_compare_invalid_image_a&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-duration\&#34;&gt;103 ms&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-links\&#34;&gt;&lt;/td&gt;&#34;], &#34;log&#34;: &#34;----------------------------- Captured stdout call -----------------------------\n2026-11-05 22:47:20,319 INFO face_service [f060202a95c6482ab60f19e3916dd002] POST /api/v1/face/compare -&amp;gt; 400 99.75ms\n\n------------------------------ Captured log call -------------------------------\nINFO     face_service:__init__.py:123 POST /api/v1/face/compare -&amp;gt; 400 99.75ms\nINFO     werkzeug:_internal.py:97 127.0.0.1 - - [05/Nov/2026 22:47:20] &amp;quot;POST /api/v1/face/compare HTTP/1.1&amp;quot; 400 -\n\n&#34;}], &#34;tests/test_compare.py::test_compare_oversized_image_a&#34;: [{&#34;extras&#34;: [], &#34;result&#34;: &#34;Passed&#34;, &#34;testId&#34;: &#34;tests/test_compare.py::test_compare_oversized_image_a&#34;, &#34;duration&#34;: &#34;17 ms&#34;, &#34;resultsTableRow&#34;: [&#34;&lt;td class=\&#34;col-result\&#34;&gt;Passed&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-testId\&#34;&gt;tests/test_compare.py::test_compare_oversized_image_a&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-duration\&#34;&gt;17 ms&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-links\&#34;&gt;&lt;/td&gt;&#34;], &#34;log&#34;: &#34;----------------------------- Captured stdout call -----------------------------\n2026-11-05 22:47:20,333 INFO face_service [6e1daefd679149febf04268e965a7ca6] POST /api/v1/face/compare -&amp;gt; 413 11.64ms\n\n------------------------------ Captured log call -------------------------------\nINFO     face_service:__init__.py:123 POST /api/v1/face/compare -&amp;gt; 413 11.64ms\nINFO     werkzeug:_internal.py:97 127.0.0.1 - - [05/Nov/2026 22:47:20] &amp;quot;POST /api/v1/face/compare HTTP/1.1&amp;quot; 413 -\n\n&#34;}], &#34;tests/test_compare.py::test_compare_requires_api_key&#34;: [{&#34;extras&#34;: [], &#34;result&#34;: &#34;Passed&#34;, &#34;testId&#34;: &#34;tests/test_compare.py::test_compare_requires_api_key&#34;, &#34;duration&#34;: &#34;16 ms&#34;, &#34;resultsTableRow&#34;: [&#34;&lt;td class=\&#34;col-result\&#34;&gt;Passed&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-testId\&#34;&gt;tests/test_compare.py::test_compare_requires_api_key&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-duration\&#34;&gt;16 ms&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-links\&#34;&gt;&lt;/td&gt;&#34;], &#34;log&#34;: &#34;----------------------------- Captured stdout call -----------------------------\n2026-11-05 22:47:20,352 INFO face_service [bbe4a74cbf654c0f9baa8cc2e9ad3739] POST /api/v1/face/compare -&amp;gt; 401 0.08ms\n\n------------------------------ Captured log call -------------------------------\nINFO     face_service:__init__.py:123 POST /api/v1/face/compare -&amp;gt; 401 0.08ms\nINFO     werkzeug:_internal.py:97 127.0.0.1 - - [05/Nov/2026 22:47:20] &amp;quot;POST /api/v1/face/compare HTTP/1.1&amp;quot; 401 -\n\n&#34;}], &#34;tests/test_compare.py::test_compare_duplicate_key&#34;: [{&#34;extras&#34;: [], &#34;result&#34;: &#34;Passed&#34;, &#34;testId&#34;: &#34;tests/test_compare.py::test_compare_duplicate_key&#34;, &#34;duration&#34;: &#34;58 ms&#34;, &#34;resultsTableRow&#34;: [&#34;&lt;td class=\&#34;col-result\&#34;&gt;Passed&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-testId\&#34;&gt;tests/test_compare.py::test_compare_duplicate_key&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-duration\&#34;&gt;58 ms&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-links\&#34;&gt;&lt;/td&gt;&#34;], &#34;log&#34;: &#34;----------------------------- Captured stdout call -----------------------------\n2026-11-05 22:47:20,397 INFO face_service [0c87b41ad2bc4f5c8e8eb592896fc1c9] POST /api/v1/face/compare -&amp;gt; 200 36.66ms\n2026-11-05 22:47:20,409 INFO face_service [2dd1429f37f54378877ec1f10a0e012c] POST /api/v1/face/compare -&amp;gt; 200 8.89ms\n\n------------------------------ Captured log call -------------------------------\nINFO     werkzeug:_internal.py:97 127.0.0.1 - - [05/Nov/2026 22:47:20] &amp;quot;GET /stats HTTP/1.1&amp;quot; 200 -\nINFO     werkzeug:_internal.py:97 127.0.0.1 - - [05/Nov/2026 22:47:20] &amp;quot;POST /v1/service/v1/image_identify/face_compare HTTP/1.1&amp;quot; 200 -\nINFO     face_service:__init__.py:123 POST /api/v1/face/compare -&amp;gt; 200 36.66ms\nINFO     werkzeug:_internal.py:97 127.0.0.1 - - [05/Nov/2026 22:47:20] &amp;quot;POST /api/v1/face/compare HTTP/1.1&amp;quot; 200 -\nINFO     face_service:__init__.py:123 POST /api/v1/face/compare -&amp;gt; 200 8.89ms\nINFO     werkzeug:_internal.py:97 127.0.0.1 - - [05/Nov/2026 22:47:20] &amp;quot;POST /api/v1/face/compare HTTP/1.1&amp;quot; 200 -\nINFO     werkzeug:_internal.py:97 127.0.0.1 - - [05/Nov/2026 22:47:20] &amp;quot;GET /stats HTTP/1.1&amp;quot; 200 -\n\n&#34;}], &#34;tests/test_compare.py::test_compare_same_key_different_payload&#34;: [{&#34;extras&#34;: [], &#34;result&#34;: &#34;Passed&#34;, &#34;testId&#34;: &#34;tests/test_compare.py::test_compare_same_key_different_payload&#34;, &#34;duration&#34;: &#34;56 ms&#34;, &#34;resultsTableRow&#34;: [&#34;&lt;td class=\&#34;col-result\&#34;&gt;Passed&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-testId\&#34;&gt;tests/test_compare.py::test_compare_same_key_different_payload&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-duration\&#34;&gt;56 ms&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-links\&#34;&gt;&lt;/td&gt;&#34;], &#34;log&#34;: &#34;----------------------------- Captured stdout call -----------------------------\n2026-11-05 22:47:20,457 INFO face_service [eee8c554480345209233d94d7b2703bb] POST /api/v1/face/compare -&amp;gt; 200 30.53ms\n2026-11-05 22:47:20,462 INFO face_service [9b157df2adbe4839910a4fe295476fb5] POST /api/v1/face/compare -&amp;gt; 409 8.24ms\n\n------------------------------ Captured log call -------------------------------\nINFO     werkzeug:_internal.py:97 127.0.0.1 - - [05/Nov/2026 22:47:20] &amp;quot;POST /v1/service/v1/image_identify/face_compare HTTP/1.1&amp;quot; 200 -\nINFO     face_service:__init__.py:123 POST /api/v1/face/compare -&amp;gt; 200 30.53ms\nINFO     werkzeug:_internal.py:97 127.0.0.1 - - [05/Nov/2026 22:47:20] &amp;quot;POST /api/v1/face/compare HTTP/1.1&amp;quot; 200 -\nINFO     face_service:__init__.py:123 POST /api/v1/face/compare -&amp;gt; 409 8.24ms\nINFO     werkzeug:_internal.py:97 127.0.0.1 - - [05/Nov/2026 22:47:20] &amp;quot;POST /api/v1/face/compare HTTP/1.1&amp;quot; 409 -\n\n&#34;}], &#34;tests/test_compare.py::test_compare_cors_header_on_success&#34;: [{&#34;extras&#34;: [], &#34;result&#34;: &#34;Passed&#34;, &#34;testId&#34;: &#34;tests/test_compare.py::test_compare_cors_header_on_success&#34;, &#34;duration&#34;: &#34;28 ms&#34;, &#34;resultsTableRow&#34;: [&#34;&lt;td class=\&#34;col-result\&#34;&gt;Passed&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-testId\&#34;&gt;tests/test_compare.py::test_compare_cors_header_on_success&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-duration\&#34;&gt;28 ms&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-links\&#34;&gt;&lt;/td&gt;&#34;], &#34;log&#34;: &#34;----------------------------- Captured stdout call -----------------------------\n2026-11-05 22:47:20,496 INFO face_service [b10157bb51544567bf454c3000048092] POST /api/v1/face/compare -&amp;gt; 200 23.92ms\n\n------------------------------ Captured log call -------------------------------\nINFO     werkzeug:_internal.py:97 127.0.0.1 - - [05/Nov/2026 22:47:20] &amp;quot;POST /v1/service/v1/image_identify/face_compare HTTP/1.1&amp;quot; 200 -\nINFO     face_service:__init__.py:123 POST /api/v1/face/compare -&amp;gt; 200 23.92ms\nINFO     werkzeug:_internal.py:97 127.0.0.1 - - [05/Nov/2026 22:47:20] &amp;quot;POST /api/v1/face/compare HTTP/1.1&amp;quot; 200 -\n\n&#34;}], &#34;tests/test_concurrency.py::test_parallel_detect_has_no_500&#34;: [{&#34;extras&#34;: [], &#34;result&#34;: &#34;Passed&#34;, &#34;testId&#34;: &#34;tests/test_concurrency.py::test_parallel_detect_has_no_500&#34;, &#34;duration&#34;: &#34;233 ms&#34;, &#34;resultsTableRow&#34;: [&#34;&lt;td class=\&#34;col-result\&#34;&gt;Passed&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-testId\&#34;&gt;tests/test_concurrency.py::test_parallel_detect_has_no_500&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-duration\&#34;&gt;233 ms&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-links\&#34;&gt;&lt;/td&gt;&#34;], &#34;log&#34;: &#34;----------------------------- Captured stdout call -----------------------------\n2026-11-05 22:47:20,550 INFO face_service [8a19e0be90da4df9a50b8d7318821a6a] POST /api/v1/face/detect -&amp;gt; 200 42.11ms\n2026-11-05 22:47:20,558 INFO face_service [41cc668b8a0c499cabd162f9c55874e2] POST /api/v1/face/detect -&amp;gt; 200 48.89ms\n2026-11-05 22:47:20,562 INFO face_service [33eb78855cbd4c8888668aebf4cfd79f] POST /api/v1/face/detect -&amp;gt; 200 56.20ms\n2026-11-05 22:47:20,569 INFO face_service [75815dfd9420434ca18a80b6a657bf8c] POST /api/v1/face/detect -&amp;gt; 200 47.86ms\n2026-11-05 22:47:20,582 INFO face_service [4f3383706dd141718152f8c5d9667925] POST /api/v1/face/detect -&amp;gt; 200 65.96ms\n2026-11-05 22:47:20,583 INFO face_service [417f45f9b5a045f0b4233a5774bcf8e7] POST /api/v1/face/detect -&amp;gt; 200 64.27ms\n2026-11-05 22:47:20,592 INFO face_service [46c72ba497c1404ea324b05b50cdf28e] POST /api/v1/face/detect -&amp;gt; 200 78.22ms\n2026-11-05 22:47:20,600 INFO face_service [e9d7c6926c4f4103b8a08e80dc75abb0] POST /api/v1/face/detect -&amp;gt; 200 87.86ms\n2026-11-05 22:47:20,616 INFO face_service [f1b9d725d4634a89bd4c8b3f46670da3] POST /api/v1/face/detect -&amp;gt; 200 60.89ms\n2026-11-05 22:47:20,627 INFO face_service [b3c2d7bd87b448609098aba4bdd00ae6] POST /api/v1/face/detect -&amp;gt; 200 62.70ms\n2026-11-05 22:47:20,635 INFO face_service [79e6178ee0684ecab6ecc7404936a659] POST /api/v1/face/detect -&amp;gt; 200 46.25ms\n2026-11-05 22:47:20,649 INFO face_service [0b9999008f7347ffb80ad5cf2335a6ee] POST /api/v1/face/detect -&amp;gt; 200 53.88ms\n2026-11-05 22:47:20,650 INFO face_service [13ef580be6a74934b355fbb8dba16bb9] POST /api/v1/face/detect -&amp;gt; 200 67.49ms\n2026-11-05 22:47:20,659 INFO face_service [a47f19a4d2494dc8a2e29a0bc6dba31f] POST /api/v1/face/detect -&amp;gt; 200 57.60ms\n2026-11-05 22:47:20,694 INFO face_service [9622c680fcff4a2b995b9338e26d5905] POST /api/v1/face/detect -&amp;gt; 200 123.13ms\n2026-11-05 22:47:20,729 INFO face_service [aa8dd79dbc4642d9953d74ee71a53724] POST /api/v1/face/detect -&amp;gt; 200 167.74ms\n\n------------------------------ Captured log call -------------------------------\nINFO     werkzeug:_internal.py:97 127.0.0.1 - - [05/Nov/2026 22:47:20] &amp;quot;POST /v1/service/v1/image_identify/face_detect HTTP/1.1&amp;quot; 200 -\nINFO     werkzeug:_internal.py:97 127.0.0.1 - - [05/Nov/2026 22:47:20] &amp;quot;POST /v1/service/v1/image_identify/face_detect HTTP/1.1&amp;quot; 200 -\nINFO     werkzeug:_internal.py:97 127.0.0.1 - - [05/Nov/2026 22:47:20] &amp;quot;POST /v1/service/v1/image_identify/face_detect HTTP/1.1&amp;quot; 200 -\nINFO     werkzeug:_internal.py:97 127.0.0.1 - - [05/Nov/2026 22:47:20] &amp;quot;POST /v1/service/v1/image_identify/face_detect HTTP/1.1&amp;quot; 200 -\nINFO     werkzeug:_internal.py:97 127.0.0.1 - - [05/Nov/2026 22:47:20] &amp;quot;POST /v1/service/v1/image_identify/face_detect HTTP/1.1&amp;quot; 200 -\nINFO     werkzeug:_internal.py:97 127.0.0.1 - - [05/Nov/2026 22:47:20] &amp;quot;POST /v1/service/v1/image_identify/face_detect HTTP/1.1&amp;quot; 200 -\nINFO     werkzeug:_internal.py:97 127.0.0.1 - - [05/Nov/2026 22:47:20] &amp;quot;POST /v1/service/v1/image_identify/face_detect HTTP/1.1&amp;quot; 200 -\nINFO     face_service:__init__.py:123 POST /api/v1/face/detect -&amp;gt; 200 42.11ms\nINFO     werkzeug:_internal.py:97 127.0.0.1 - - [05/Nov/2026 22:47:20] &amp;quot;POST /api/v1/face/detect HTTP/1.1&amp;quot; 200 -\nINFO     werkzeug:_internal.py:97 127.0.0.1 - - [05/Nov/2026 22:47:20] &amp;quot;POST /v1/service/v1/image_identify/face_detect HTTP/1.1&amp;quot; 200 -\nINFO     face_service:__init__.py:123 POST /api/v1/face/detect -&amp;gt; 200 48.89ms\nINFO     werkzeug:_internal.py:97 127.0.0.1 - - [05/Nov/2026 22:47:20] &amp;quot;POST /api/v1/face/detect HTTP/1.1&amp;quot; 200 -\nINFO     face_service:__init__.py:123 POST /api/v1/face/detect -&amp;gt; 200 56.20ms\nINFO     werkzeug:_internal.py:97 127.0.0.1 - - [05/Nov/2026 22:47:20] &amp;quot;POST /api/v1/face/detect HTTP/1.1&amp;quot; 200 -\nINFO     face_service:__init__.py:123 POST /api/v1/face/detect -&amp;gt; 200 47.86ms\nINFO     werkzeug:_internal.py:97 127.0.0.1 - - [05/Nov/2026 22:47:20] &amp;quot;POST /api/v1/face/detect HTTP/1.1&amp;quot; 200 -\nINFO     face_service:__init__.py:123 POST /api/v1/face/detect -&amp;gt; 200 65.96ms\nINFO     werkzeug:_internal.py:97 127.0.0.1 - - [05/Nov/2026 22:47:20] &amp;quot;POST /api/v1/face/detect HTTP/1.1&amp;quot; 200 -\nINFO     face_service:__init__.py:123 POST /api/v1/face/detect -&amp;gt; 200 64.27ms\nINFO     werkzeug:_internal.py:97 127.0.0.1 - - [05/Nov/2026 22:47:20] &amp;quot;POST /api/v1/face/detect HTTP/1.1&amp;quot; 200 -\nINFO     face_service:__init__.py:123 POST /api/v1/face/detect -&amp;gt; 200 78.22ms\nINFO     werkzeug:_internal.py:97 127.0.0.1 - - [05/Nov/2026 22:47:20] &amp;quot;POST /api/v1/face/detect HTTP/1.1&amp;quot; 200 -\nINFO     face_service:__init__.py:123 POST /api/v1/face/detect -&amp;gt; 200 87.86ms\nINFO     werkzeug:_internal.py:97 127.0.0.1 - - [05/Nov/2026 22:47:20] &amp;quot;POST /api/v1/face/detect HTTP/1.1&amp;quot; 200 -\nINFO     werkzeug:_internal.py:97 127.0.0.1 - - [05/Nov/2026 22:47:20] &amp;quot;POST /v1/service/v1/image_identify/face_detect HTTP/1.1&amp;quot; 200 -\nINFO     face_service:__init__.py:123 POST /api/v1/face/detect -&amp;gt; 200 60.89ms\nINFO     werkzeug:_internal.py:97 127.0.0.1 - - [05/Nov/2026 22:47:20] &amp;quot;POST /api/v1/face/detect HTTP/1.1&amp;quot; 200 -\nINFO     werkzeug:_internal.py:97 127.0.0.1 - - [05/Nov/2026 22:47:20] &amp;quot;POST /v1/service/v1/image_identify/face_detect HTTP/1.1&amp;quot; 200 -\nINFO     werkzeug:_internal.py:97 127.0.0.1 - - [05/Nov/2026 22:47:20] &amp;quot;POST /v1/service/v1/image_identify/face_detect HTTP/1.1&amp;quot; 200 -\nINFO     face_service:__init__.py:123 POST /api/v1/face/detect -&amp;gt; 200 62.70ms\nINFO     werkzeug:_internal.py:97 127.0.0.1 - - [05/Nov/2026 22:47:20] &amp;quot;POST /api/v1/face/detect HTTP/1.1&amp;quot; 200 -\nINFO     face_service:__init__.py:123 POST /api/v1/face/detect -&amp;gt; 200 46.25ms\nINFO     werkzeug:_internal.py:97 127.0.0.1 - - [05/Nov/2026 22:47:20] &amp;quot;POST /api/v1/face/detect HTTP/1.1&amp;quot; 200 -\nINFO     werkzeug:_internal.py:97 127.0.0.1 - - [05/Nov/2026 22:47:20] &amp;quot;POST /v1/service/v1/image_identify/face_detect HTTP/1.1&amp;quot; 200 -\nINFO     werkzeug:_internal.py:97 127.0.0.1 - - [05/Nov/2026 22:47:20] &amp;quot;POST /v1/service/v1/image_identify/face_detect HTTP/1.1&amp;quot; 200 -\nINFO     werkzeug:_internal.py:97 127.0.0.1 - - [05/Nov/2026 22:47:20] &amp;quot;POST /v1/service/v1/image_identify/face_detect HTTP/1.1&amp;quot; 200 -\nINFO     face_service:__init__.py:123 POST /api/v1/face/detect -&amp;gt; 200 53.88ms\nINFO     werkzeug:_internal.py:97 127.0.0.1 - - [05/Nov/2026 22:47:20] &amp;quot;POST /api/v1/face/detect HTTP/1.1&amp;quot; 200 -\nINFO     face_service:__init__.py:123 POST /api/v1/face/detect -&amp;gt; 200 67.49ms\nINFO     werkzeug:_internal.py:97 127.0.0.1 - - [05/Nov/2026 22:47:20] &amp;quot;POST /api/v1/face/detect HTTP/1.1&amp;quot; 200 -\nINFO     face_service:__init__.py:123 POST /api/v1/face/detect -&amp;gt; 200 57.60ms\nINFO     werkzeug:_internal.py:97 127.0.0.1 - - [05/Nov/2026 22:47:20] &amp;quot;POST /api/v1/face/detect HTTP/1.1&amp;quot; 200 -\nINFO     werkzeug:_internal.py:97 127.0.0.1 - - [05/Nov/2026 22:47:20] &amp;quot;POST /v1/service/v1/image_identify/face_detect HTTP/1.1&amp;quot; 200 -\nINFO     face_service:__init__.py:123 POST /api/v1/face/detect -&amp;gt; 200 123.13ms\nINFO     werkzeug:_internal.py:97 127.0.0.1 - - [05/Nov/2026 22:47:20] &amp;quot;POST /api/v1/face/detect HTTP/1.1&amp;quot; 200 -\nINFO     werkzeug:_internal.py:97 127.0.0.1 - - [05/Nov/2026 22:47:20] &amp;quot;POST /v1/service/v1/image_identify/face_detect HTTP/1.1&amp;quot; 200 -\nINFO     face_service:__init__.py:123 POST /api/v1/face/detect -&amp;gt; 200 167.74ms\nINFO     werkzeug:_internal.py:97 127.0.0.1 - - [05/Nov/2026 22:47:20] &amp;quot;POST /api/v1/face/detect HTTP/1.1&amp;quot; 200 -\n\n&#34;}], &#34;tests/test_concurrency.py::test_parallel_same_idempotency_key_only_calls_provider_once&#34;: [{&#34;extras&#34;: [], &#34;result&#34;: &#34;Passed&#34;, &#34;testId&#34;: &#34;tests/test_concurrency.py::test_parallel_same_idempotency_key_only_calls_provider_once&#34;, &#34;duration&#34;: &#34;67 ms&#34;, &#34;resultsTableRow&#34;: [&#34;&lt;td class=\&#34;col-result\&#34;&gt;Passed&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-testId\&#34;&gt;tests/test_concurrency.py::test_parallel_same_idempotency_key_only_calls_provider_once&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-duration\&#34;&gt;67 ms&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-links\&#34;&gt;&lt;/td&gt;&#34;], &#34;log&#34;: &#34;----------------------------- Captured stdout call -----------------------------\n2026-11-05 22:47:20,781 INFO face_service [d995b4604b04459ab9fc1866446f35bf] POST /api/v1/face/detect -&amp;gt; 200 37.91ms\n2026-11-05 22:47:20,787 INFO face_service [68fbe90c2f204130aff97b0a38b9821e] POST /api/v1/face/detect -&amp;gt; 200 39.02ms\n2026-11-05 22:47:20,789 INFO face_service [c5a4a6bfc467405fa919664af2fcb21a] POST /api/v1/face/detect -&amp;gt; 200 45.08ms\n2026-11-05 22:47:20,791 INFO face_service [f75a86e583bb4f3e8e00a913ef7bf590] POST /api/v1/face/detect -&amp;gt; 200 43.85ms\n2026-11-05 22:47:20,792 INFO face_service [df92a23e07b74136b07fe7d6fab6efaa] POST /api/v1/face/detect -&amp;gt; 200 40.40ms\n2026-11-05 22:47:20,793 INFO face_service [8185e285e96f4fe4bdd317bf36165cd9] POST /api/v1/face/detect -&amp;gt; 200 40.59ms\n2026-11-05 22:47:20,795 INFO face_service [118a6836ea4e4a7798bb22c3d4a6b67a] POST /api/v1/face/detect -&amp;gt; 200 54.52ms\n2026-11-05 22:47:20,796 INFO face_service [25807ad254884102b63ed647dffc26cd] POST /api/v1/face/detect -&amp;gt; 200 50.83ms\n\n------------------------------ Captured log call -------------------------------\nINFO     werkzeug:_internal.py:97 127.0.0.1 - - [05/Nov/2026 22:47:20] &amp;quot;GET /stats HTTP/1.1&amp;quot; 200 -\nINFO     werkzeug:_internal.py:97 127.0.0.1 - - [05/Nov/2026 22:47:20] &amp;quot;POST /v1/service/v1/image_identify/face_detect HTTP/1.1&amp;quot; 200 -\nINFO     face_service:__init__.py:123 POST /api/v1/face/detect -&amp;gt; 200 37.91ms\nINFO     werkzeug:_internal.py:97 127.0.0.1 - - [05/Nov/2026 22:47:20] &amp;quot;POST /api/v1/face/detect HTTP/1.1&amp;quot; 200 -\nINFO     face_service:__init__.py:123 POST /api/v1/face/detect -&amp;gt; 200 39.02ms\nINFO     werkzeug:_internal.py:97 127.0.0.1 - - [05/Nov/2026 22:47:20] &amp;quot;POST /api/v1/face/detect HTTP/1.1&amp;quot; 200 -\nINFO     face_service:__init__.py:123 POST /api/v1/face/detect -&amp;gt; 200 45.08ms\nINFO     werkzeug:_internal.py:97 127.0.0.1 - - [05/Nov/2026 22:47:20] &amp;quot;POST /api/v1/face/detect HTTP/1.1&amp;quot; 200 -\nINFO     face_service:__init__.py:123 POST /api/v1/face/detect -&amp;gt; 200 43.85ms\nINFO     werkzeug:_internal.py:97 127.0.0.1 - - [05/Nov/2026 22:47:20] &amp;quot;POST /api/v1/face/detect HTTP/1.1&amp;quot; 200 -\nINFO     face_service:__init__.py:123 POST /api/v1/face/detect -&amp;gt; 200 40.40ms\nINFO     werkzeug:_internal.py:97 127.0.0.1 - - [05/Nov/2026 22:47:20] &amp;quot;POST /api/v1/face/detect HTTP/1.1&amp;quot; 200 -\nINFO     face_service:__init__.py:123 POST /api/v1/face/detect -&amp;gt; 200 40.59ms\nINFO     werkzeug:_internal.py:97 127.0.0.1 - - [05/Nov/2026 22:47:20] &amp;quot;POST /api/v1/face/detect HTTP/1.1&amp;quot; 200 -\nINFO     face_service:__init__.py:123 POST /api/v1/face/detect -&amp;gt; 200 54.52ms\nINFO     werkzeug:_internal.py:97 127.0.0.1 - - [05/Nov/2026 22:47:20] &amp;quot;POST /api/v1/face/detect HTTP/1.1&amp;quot; 200 -\nINFO     face_service:__init__.py:123 POST /api/v1/face/detect -&amp;gt; 200 50.83ms\nINFO     werkzeug:_internal.py:97 127.0.0.1 - - [05/Nov/2026 22:47:20] &amp;quot;POST /api/v1/face/detect HTTP/1.1&amp;quot; 200 -\nINFO     werkzeug:_internal.py:97 127.0.0.1 - - [05/Nov/2026 22:47:20] &amp;quot;GET /stats HTTP/1.1&amp;quot; 200 -\n\n&#34;}], &#34;tests/test_concurrency.py::test_parallel_compare_returns_unique_request_ids&#34;: [{&#34;extras&#34;: [], &#34;result&#34;: &#34;Passed&#34;, &#34;testId&#34;: &#34;tests/test_concurrency.py::test_parallel_compare_returns_unique_request_ids&#34;, &#34;duration&#34;: &#34;96 ms&#34;, &#34;resultsTableRow&#34;: [&#34;&lt;td class=\&#34;col-result\&#34;&gt;Passed&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-testId\&#34;&gt;tests/test_concurrency.py::test_parallel_compare_returns_unique_request_ids&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-duration\&#34;&gt;96 ms&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-links\&#34;&gt;&lt;/td&gt;&#34;], &#34;log&#34;: &#34;----------------------------- Captured stdout call -----------------------------\n2026-11-05 22:47:20,852 INFO face_service [49c478925c344e8ca4b634d0e6f88f27] POST /api/v1/face/compare -&amp;gt; 200 44.80ms\n2026-11-05 22:47:20,860 INFO face_service [95313292c5ac495aaa84f5a526c8402a] POST /api/v1/face/compare -&amp;gt; 200 49.02ms\n2026-11-05 22:47:20,863 INFO face_service [979c8a8369de411089633a49220d4a90] POST /api/v1/face/compare -&amp;gt; 200 50.78ms\n2026-11-05 22:47:20,869 INFO face_service [f29ba073964c4737bfd1a6ff561b9d5e] POST /api/v1/face/compare -&amp;gt; 200 51.47ms\n2026-11-05 22:47:20,878 INFO face_service [537e8c0de9f94126b5f6d66a2a2e5398] POST /api/v1/face/compare -&amp;gt; 200 64.09ms\n2026-11-05 22:47:20,884 INFO face_service [5d4ea875feec4da1a1b1d0ebd333ee4b] POST /api/v1/face/compare -&amp;gt; 200 74.46ms\n2026-11-05 22:47:20,888 INFO face_service [7012fbdc1c9a4772bc9e446c6926a109] POST /api/v1/face/compare -&amp;gt; 200 68.87ms\n2026-11-05 22:47:20,895 INFO face_service [8e835e1e5a8a4dee80ad082b8a07ead1] POST /api/v1/face/compare -&amp;gt; 200 79.11ms\n\n------------------------------ Captured log call -------------------------------\nINFO     werkzeug:_internal.py:97 127.0.0.1 - - [05/Nov/2026 22:47:20] &amp;quot;POST /v1/service/v1/image_identify/face_compare HTTP/1.1&amp;quot; 200 -\nINFO     werkzeug:_internal.py:97 127.0.0.1 - - [05/Nov/2026 22:47:20] &amp;quot;POST /v1/service/v1/image_identify/face_compare HTTP/1.1&amp;quot; 200 -\nINFO     werkzeug:_internal.py:97 127.0.0.1 - - [05/Nov/2026 22:47:20] &amp;quot;POST /v1/service/v1/image_identify/face_compare HTTP/1.1&amp;quot; 200 -\nINFO     werkzeug:_internal.py:97 127.0.0.1 - - [05/Nov/2026 22:47:20] &amp;quot;POST /v1/service/v1/image_identify/face_compare HTTP/1.1&amp;quot; 200 -\nINFO     werkzeug:_internal.py:97 127.0.0.1 - - [05/Nov/2026 22:47:20] &amp;quot;POST /v1/service/v1/image_identify/face_compare HTTP/1.1&amp;quot; 200 -\nINFO     werkzeug:_internal.py:97 127.0.0.1 - - [05/Nov/2026 22:47:20] &amp;quot;POST /v1/service/v1/image_identify/face_compare HTTP/1.1&amp;quot; 200 -\nINFO     face_service:__init__.py:123 POST /api/v1/face/compare -&amp;gt; 200 44.80ms\nINFO     werkzeug:_internal.py:97 127.0.0.1 - - [05/Nov/2026 22:47:20] &amp;quot;POST /api/v1/face/compare HTTP/1.1&amp;quot; 200 -\nINFO     werkzeug:_internal.py:97 127.0.0.1 - - [05/Nov/2026 22:47:20] &amp;quot;POST /v1/service/v1/image_identify/face_compare HTTP/1.1&amp;quot; 200 -\nINFO     werkzeug:_internal.py:97 127.0.0.1 - - [05/Nov/2026 22:47:20] &amp;quot;POST /v1/service/v1/image_identify/face_compare HTTP/1.1&amp;quot; 200 -\nINFO     face_service:__init__.py:123 POST /api/v1/face/compare -&amp;gt; 200 49.02ms\nINFO     werkzeug:_internal.py:97 127.0.0.1 - - [05/Nov/2026 22:47:20] &amp;quot;POST /api/v1/face/compare HTTP/1.1&amp;quot; 200 -\nINFO     face_service:__init__.py:123 POST /api/v1/face/compare -&amp;gt; 200 50.78ms\nINFO     werkzeug:_internal.py:97 127.0.0.1 - - [05/Nov/2026 22:47:20] &amp;quot;POST /api/v1/face/compare HTTP/1.1&amp;quot; 200 -\nINFO     face_service:__init__.py:123 POST /api/v1/face/compare -&amp;gt; 200 51.47ms\nINFO     werkzeug:_internal.py:97 127.0.0.1 - - [05/Nov/2026 22:47:20] &amp;quot;POST /api/v1/face/compare HTTP/1.1&amp;quot; 200 -\nINFO     face_service:__init__.py:123 POST /api/v1/face/compare -&amp;gt; 200 64.09ms\nINFO     werkzeug:_internal.py:97 127.0.0.1 - - [05/Nov/2026 22:47:20] &amp;quot;POST /api/v1/face/compare HTTP/1.1&amp;quot; 200 -\nINFO     face_service:__init__.py:123 POST /api/v1/face/compare -&amp;gt; 200 74.46ms\nINFO     werkzeug:_internal.py:97 127.0.0.1 - - [05/Nov/2026 22:47:20] &amp;quot;POST /api/v1/face/compare HTTP/1.1&amp;quot; 200 -\nINFO     face_service:__init__.py:123 POST /api/v1/face/compare -&amp;gt; 200 68.87ms\nINFO     werkzeug:_internal.py:97 127.0.0.1 - - [05/Nov/2026 22:47:20] &amp;quot;POST /api/v1/face/compare HTTP/1.1&amp;quot; 200 -\nINFO     face_service:__init__.py:123 POST /api/v1/face/compare -&amp;gt; 200 79.11ms\nINFO     werkzeug:_internal.py:97 127.0.0.1 - - [05/Nov/2026 22:47:20] &amp;quot;POST /api/v1/face/compare HTTP/1.1&amp;quot; 200 -\n\n&#34;}], &#34;tests/test_concurrency.py::test_idempotency_locks_are_reclaimed&#34;: [{&#34;extras&#34;: [], &#34;result&#34;: &#34;Passed&#34;, &#34;testId&#34;: &#34;tests/test_concurrency.py::test_idempotency_locks_are_reclaimed&#34;, &#34;duration&#34;: &#34;223 ms&#34;, &#34;resultsTableRow&#34;: [&#34;&lt;td class=\&#34;col-result\&#34;&gt;Passed&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-testId\&#34;&gt;tests/test_concurrency.py::test_idempotency_locks_are_reclaimed&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-duration\&#34;&gt;223 ms&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-links\&#34;&gt;&lt;/td&gt;&#34;], &#34;log&#34;: &#34;No log output captured.&#34;}], &#34;tests/test_db_contract.py::test_register_persists_gallery_image&#34;: [{&#34;extras&#34;: [], &#34;result&#34;: &#34;Passed&#34;, &#34;testId&#34;: &#34;tests/test_db_contract.py::test_register_persists_gallery_image&#34;, &#34;duration&#34;: &#34;60 ms&#34;, &#34;resultsTableRow&#34;: [&#34;&lt;td class=\&#34;col-result\&#34;&gt;Passed&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-testId\&#34;&gt;tests/test_db_contract.py::test_register_persists_gallery_image&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-duration\&#34;&gt;60 ms&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-links\&#34;&gt;&lt;/td&gt;&#34;], &#34;log&#34;: &#34;----------------------------- Captured stdout call -----------------------------\n2026-11-05 22:47:21,173 INFO face_service [6085e560dbe74e07b2fdec413a5ac7a7] POST /api/v1/face/register -&amp;gt; 201 47.79ms\n\n------------------------------ Captured log call -------------------------------\nINFO     werkzeug:_internal.py:97 127.0.0.1 - - [05/Nov/2026 22:47:21] &amp;quot;POST /v1/service/v1/image_identify/face_detect HTTP/1.1&amp;quot; 200 -\nINFO     face_service:__init__.py:123 POST /api/v1/face/register -&amp;gt; 201 47.79ms\nINFO     werkzeug:_internal.py:97 127.0.0.1 - - [05/Nov/2026 22:47:21] &amp;quot;POST /api/v1/face/register HTTP/1.1&amp;quot; 201 -\n\n&#34;}], &#34;tests/test_db_contract.py::test_idempotency_record_persisted&#34;: [{&#34;extras&#34;: [], &#34;result&#34;: &#34;Passed&#34;, &#34;testId&#34;: &#34;tests/test_db_contract.py::test_idempotency_record_persisted&#34;, &#34;duration&#34;: &#34;42 ms&#34;, &#34;resultsTableRow&#34;: [&#34;&lt;td class=\&#34;col-result\&#34;&gt;Passed&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-testId\&#34;&gt;tests/test_db_contract.py::test_idempotency_record_persisted&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-duration\&#34;&gt;42 ms&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-links\&#34;&gt;&lt;/td&gt;&#34;], &#34;log&#34;: &#34;----------------------------- Captured stdout call -----------------------------\n2026-11-05 22:47:21,214 INFO face_service [e3deb6ff6af748cca9b8d2259c6d340c] POST /api/v1/face/detect -&amp;gt; 200 29.49ms\n\n------------------------------ Captured log call -------------------------------\nINFO     werkzeug:_internal.py:97 127.0.0.1 - - [05/Nov/2026 22:47:21] &amp;quot;POST /v1/service/v1/image_identify/face_detect HTTP/1.1&amp;quot; 200 -\nINFO     face_service:__init__.py:123 POST /api/v1/face/detect -&amp;gt; 200 29.49ms\nINFO     werkzeug:_internal.py:97 127.0.0.1 - - [05/Nov/2026 22:47:21] &amp;quot;POST /api/v1/face/detect HTTP/1.1&amp;quot; 200 -\n\n&#34;}], &#34;tests/test_db_contract.py::test_duplicate_person_keeps_one_row&#34;: [{&#34;extras&#34;: [], &#34;result&#34;: &#34;Passed&#34;, &#34;testId&#34;: &#34;tests/test_db_contract.py::test_duplicate_person_keeps_one_row&#34;, &#34;duration&#34;: &#34;69 ms&#34;, &#34;resultsTableRow&#34;: [&#34;&lt;td class=\&#34;col-result\&#34;&gt;Passed&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-testId\&#34;&gt;tests/test_db_contract.py::test_duplicate_person_keeps_one_row&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-duration\&#34;&gt;69 ms&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-links\&#34;&gt;&lt;/td&gt;&#34;], &#34;log&#34;: &#34;----------------------------- Captured stdout call -----------------------------\n2026-11-05 22:47:21,256 INFO face_service [f6da03cf082a4a6e98c86b9262fb99c4] POST /api/v1/face/register -&amp;gt; 201 28.04ms\n2026-11-05 22:47:21,293 INFO face_service [0cc463921755481c86b4e03062ba9a3f] POST /api/v1/face/register -&amp;gt; 409 32.41ms\n\n------------------------------ Captured log call -------------------------------\nINFO     werkzeug:_internal.py:97 127.0.0.1 - - [05/Nov/2026 22:47:21] &amp;quot;POST /v1/service/v1/image_identify/face_detect HTTP/1.1&amp;quot; 200 -\nINFO     face_service:__init__.py:123 POST /api/v1/face/register -&amp;gt; 201 28.04ms\nINFO     werkzeug:_internal.py:97 127.0.0.1 - - [05/Nov/2026 22:47:21] &amp;quot;POST /api/v1/face/register HTTP/1.1&amp;quot; 201 -\nINFO     werkzeug:_internal.py:97 127.0.0.1 - - [05/Nov/2026 22:47:21] &amp;quot;POST /v1/service/v1/image_identify/face_detect HTTP/1.1&amp;quot; 200 -\nINFO     face_service:__init__.py:123 POST /api/v1/face/register -&amp;gt; 409 32.41ms\nINFO     werkzeug:_internal.py:97 127.0.0.1 - - [05/Nov/2026 22:47:21] &amp;quot;POST /api/v1/face/register HTTP/1.1&amp;quot; 409 -\n\n&#34;}], &#34;tests/test_db_contract.py::test_api_keys_not_leaked_in_response&#34;: [{&#34;extras&#34;: [], &#34;result&#34;: &#34;Passed&#34;, &#34;testId&#34;: &#34;tests/test_db_contract.py::test_api_keys_not_leaked_in_response&#34;, &#34;duration&#34;: &#34;28 ms&#34;, &#34;resultsTableRow&#34;: [&#34;&lt;td class=\&#34;col-result\&#34;&gt;Passed&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-testId\&#34;&gt;tests/test_db_contract.py::test_api_keys_not_leaked_in_response&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-duration\&#34;&gt;28 ms&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-links\&#34;&gt;&lt;/td&gt;&#34;], &#34;log&#34;: &#34;----------------------------- Captured stdout call -----------------------------\n2026-11-05 22:47:21,321 INFO face_service [cfed9484ee984f448b44ebc324be802c] POST /api/v1/face/detect -&amp;gt; 200 23.55ms\n\n------------------------------ Captured log call -------------------------------\nINFO     werkzeug:_internal.py:97 127.0.0.1 - - [05/Nov/2026 22:47:21] &amp;quot;POST /v1/service/v1/image_identify/face_detect HTTP/1.1&amp;quot; 200 -\nINFO     face_service:__init__.py:123 POST /api/v1/face/detect -&amp;gt; 200 23.55ms\nINFO     werkzeug:_internal.py:97 127.0.0.1 - - [05/Nov/2026 22:47:21] &amp;quot;POST /api/v1/face/detect HTTP/1.1&amp;quot; 200 -\n\n&#34;}], &#34;tests/test_detect.py::test_detect_png_success&#34;: [{&#34;extras&#34;: [], &#34;result&#34;: &#34;Passed&#34;, &#34;testId&#34;: &#34;tests/test_detect.py::test_detect_png_success&#34;, &#34;duration&#34;: &#34;28 ms&#34;, &#34;resultsTableRow&#34;: [&#34;&lt;td class=\&#34;col-result\&#34;&gt;Passed&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-testId\&#34;&gt;tests/test_detect.py::test_detect_png_success&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-duration\&#34;&gt;28 ms&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-links\&#34;&gt;&lt;/td&gt;&#34;], &#34;log&#34;: &#34;----------------------------- Captured stdout call -----------------------------\n2026-11-05 22:47:21,350 INFO face_service [e2dc135a23994138b184d98d9c2d550c] POST /api/v1/face/detect -&amp;gt; 200 23.51ms\n\n------------------------------ Captured log call -------------------------------\nINFO     werkzeug:_internal.py:97 127.0.0.1 - - [05/Nov/2026 22:47:21] &amp;quot;POST /v1/service/v1/image_identify/face_detect HTTP/1.1&amp;quot; 200 -\nINFO     face_service:__init__.py:123 POST /api/v1/face/detect -&amp;gt; 200 23.51ms\nINFO     werkzeug:_internal.py:97 127.0.0.1 - - [05/Nov/2026 22:47:21] &amp;quot;POST /api/v1/face/detect HTTP/1.1&amp;quot; 200 -\n\n&#34;}], &#34;tests/test_detect.py::test_detect_jpeg_success&#34;: [{&#34;extras&#34;: [], &#34;result&#34;: &#34;Passed&#34;, &#34;testId&#34;: &#34;tests/test_detect.py::test_detect_jpeg_success&#34;, &#34;duration&#34;: &#34;28 ms&#34;, &#34;resultsTableRow&#34;: [&#34;&lt;td class=\&#34;col-result\&#34;&gt;Passed&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-testId\&#34;&gt;tests/test_detect.py::test_detect_jpeg_success&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-duration\&#34;&gt;28 ms&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-links\&#34;&gt;&lt;/td&gt;&#34;], &#34;log&#34;: &#34;----------------------------- Captured stdout call -----------------------------\n2026-11-05 22:47:21,380 INFO face_service [fadd580a6fd94e249e7f786a75707a3d] POST /api/v1/face/detect -&amp;gt; 200 24.29ms\n\n------------------------------ Captured log call -------------------------------\nINFO     werkzeug:_internal.py:97 127.0.0.1 - - [05/Nov/2026 22:47:21] &amp;quot;POST /v1/service/v1/image_identify/face_detect HTTP/1.1&amp;quot; 200 -\nINFO     face_service:__init__.py:123 POST /api/v1/face/detect -&amp;gt; 200 24.29ms\nINFO     werkzeug:_internal.py:97 127.0.0.1 - - [05/Nov/2026 22:47:21] &amp;quot;POST /api/v1/face/detect HTTP/1.1&amp;quot; 200 -\n\n&#34;}], &#34;tests/test_detect.py::test_detect_missing_file&#34;: [{&#34;extras&#34;: [], &#34;result&#34;: &#34;Passed&#34;, &#34;testId&#34;: &#34;tests/test_detect.py::test_detect_missing_file&#34;, &#34;duration&#34;: &#34;3 ms&#34;, &#34;resultsTableRow&#34;: [&#34;&lt;td class=\&#34;col-result\&#34;&gt;Passed&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-testId\&#34;&gt;tests/test_detect.py::test_detect_missing_file&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-duration\&#34;&gt;3 ms&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-links\&#34;&gt;&lt;/td&gt;&#34;], &#34;log&#34;: &#34;----------------------------- Captured stdout call -----------------------------\n2026-11-05 22:47:21,384 INFO face_service [ea330161dfdc4a2faca847bffb02a496] POST /api/v1/face/detect -&amp;gt; 400 0.11ms\n\n------------------------------ Captured log call -------------------------------\nINFO     face_service:__init__.py:123 POST /api/v1/face/detect -&amp;gt; 400 0.11ms\nINFO     werkzeug:_internal.py:97 127.0.0.1 - - [05/Nov/2026 22:47:21] &amp;quot;POST /api/v1/face/detect HTTP/1.1&amp;quot; 400 -\n\n&#34;}], &#34;tests/test_detect.py::test_detect_empty_file&#34;: [{&#34;extras&#34;: [], &#34;result&#34;: &#34;Passed&#34;, &#34;testId&#34;: &#34;tests/test_detect.py::test_detect_empty_file&#34;, &#34;duration&#34;: &#34;14 ms&#34;, &#34;resultsTableRow&#34;: [&#34;&lt;td class=\&#34;col-result\&#34;&gt;Passed&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-testId\&#34;&gt;tests/test_detect.py::test_detect_empty_file&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-duration\&#34;&gt;14 ms&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-links\&#34;&gt;&lt;/td&gt;&#34;], &#34;log&#34;: &#34;----------------------------- Captured stdout call -----------------------------\n2026-11-05 22:47:21,399 INFO face_service [8dd88ca5fca24df587b57d63cc1ae4dc] POST /api/v1/face/detect -&amp;gt; 400 0.66ms\n\n------------------------------ Captured log call -------------------------------\nINFO     face_service:__init__.py:123 POST /api/v1/face/detect -&amp;gt; 400 0.66ms\nINFO     werkzeug:_internal.py:97 127.0.0.1 - - [05/Nov/2026 22:47:21] &amp;quot;POST /api/v1/face/detect HTTP/1.1&amp;quot; 400 -\n\n&#34;}], &#34;tests/test_detect.py::test_detect_invalid_image_bytes&#34;: [{&#34;extras&#34;: [], &#34;result&#34;: &#34;Passed&#34;, &#34;testId&#34;: &#34;tests/test_detect.py::test_detect_invalid_image_bytes&#34;, &#34;duration&#34;: &#34;7 ms&#34;, &#34;resultsTableRow&#34;: [&#34;&lt;td class=\&#34;col-result\&#34;&gt;Passed&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-testId\&#34;&gt;tests/test_detect.py::test_detect_invalid_image_bytes&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-duration\&#34;&gt;7 ms&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-links\&#34;&gt;&lt;/td&gt;&#34;], &#34;log&#34;: &#34;----------------------------- Captured stdout call -----------------------------\n2026-11-05 22:47:21,407 INFO face_service [360e962c427d4a879ae58bdc97ba1a49] POST /api/v1/face/detect -&amp;gt; 400 3.26ms\n\n------------------------------ Captured log call -------------------------------\nINFO     face_service:__init__.py:123 POST /api/v1/face/detect -&amp;gt; 400 3.26ms\nINFO     werkzeug:_internal.py:97 127.0.0.1 - - [05/Nov/2026 22:47:21] &amp;quot;POST /api/v1/face/detect HTTP/1.1&amp;quot; 400 -\n\n&#34;}], &#34;tests/test_detect.py::test_detect_unsupported_gif&#34;: [{&#34;extras&#34;: [], &#34;result&#34;: &#34;Passed&#34;, &#34;testId&#34;: &#34;tests/test_detect.py::test_detect_unsupported_gif&#34;, &#34;duration&#34;: &#34;4 ms&#34;, &#34;resultsTableRow&#34;: [&#34;&lt;td class=\&#34;col-result\&#34;&gt;Passed&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-testId\&#34;&gt;tests/test_detect.py::test_detect_unsupported_gif&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-duration\&#34;&gt;4 ms&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-links\&#34;&gt;&lt;/td&gt;&#34;], &#34;log&#34;: &#34;----------------------------- Captured stdout call -----------------------------\n2026-11-05 22:47:21,411 INFO face_service [86a488dd6d4c4743b361a4e8d9971cf5] POST /api/v1/face/detect -&amp;gt; 415 0.57ms\n\n------------------------------ Captured log call -------------------------------\nINFO     face_service:__init__.py:123 POST /api/v1/face/detect -&amp;gt; 415 0.57ms\nINFO     werkzeug:_internal.py:97 127.0.0.1 - - [05/Nov/2026 22:47:21] &amp;quot;POST /api/v1/face/detect HTTP/1.1&amp;quot; 415 -\n\n&#34;}], &#34;tests/test_detect.py::test_detect_tiny_image&#34;: [{&#34;extras&#34;: [], &#34;result&#34;: &#34;Passed&#34;, &#34;testId&#34;: &#34;tests/test_detect.py::test_detect_tiny_image&#34;, &#34;duration&#34;: &#34;4 ms&#34;, &#34;resultsTableRow&#34;: [&#34;&lt;td class=\&#34;col-result\&#34;&gt;Passed&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-testId\&#34;&gt;tests/test_detect.py::test_detect_tiny_image&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-duration\&#34;&gt;4 ms&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-links\&#34;&gt;&lt;/td&gt;&#34;], &#34;log&#34;: &#34;----------------------------- Captured stdout call -----------------------------\n2026-11-05 22:47:21,416 INFO face_service [6be08b7075274e7ea97fb6beb83c3cbb] POST /api/v1/face/detect -&amp;gt; 422 0.54ms\n\n------------------------------ Captured log call -------------------------------\nINFO     face_service:__init__.py:123 POST /api/v1/face/detect -&amp;gt; 422 0.54ms\nINFO     werkzeug:_internal.py:97 127.0.0.1 - - [05/Nov/2026 22:47:21] &amp;quot;POST /api/v1/face/detect HTTP/1.1&amp;quot; 422 -\n\n&#34;}], &#34;tests/test_detect.py::test_detect_oversized_image&#34;: [{&#34;extras&#34;: [], &#34;result&#34;: &#34;Passed&#34;, &#34;testId&#34;: &#34;tests/test_detect.py::test_detect_oversized_image&#34;, &#34;duration&#34;: &#34;10 ms&#34;, &#34;resultsTableRow&#34;: [&#34;&lt;td class=\&#34;col-result\&#34;&gt;Passed&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-testId\&#34;&gt;tests/test_detect.py::test_detect_oversized_image&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-duration\&#34;&gt;10 ms&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-links\&#34;&gt;&lt;/td&gt;&#34;], &#34;log&#34;: &#34;----------------------------- Captured stdout call -----------------------------\n2026-11-05 22:47:21,427 INFO face_service [7ed04e496cd64948a687ff0989e79fd9] POST /api/v1/face/detect -&amp;gt; 413 5.97ms\n\n------------------------------ Captured log call -------------------------------\nINFO     face_service:__init__.py:123 POST /api/v1/face/detect -&amp;gt; 413 5.97ms\nINFO     werkzeug:_internal.py:97 127.0.0.1 - - [05/Nov/2026 22:47:21] &amp;quot;POST /api/v1/face/detect HTTP/1.1&amp;quot; 413 -\n\n&#34;}], &#34;tests/test_detect.py::test_detect_requires_api_key&#34;: [{&#34;extras&#34;: [], &#34;result&#34;: &#34;Passed&#34;, &#34;testId&#34;: &#34;tests/test_detect.py::test_detect_requires_api_key&#34;, &#34;duration&#34;: &#34;4 ms&#34;, &#34;resultsTableRow&#34;: [&#34;&lt;td class=\&#34;col-result\&#34;&gt;Passed&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-testId\&#34;&gt;tests/test_detect.py::test_detect_requires_api_key&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-duration\&#34;&gt;4 ms&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-links\&#34;&gt;&lt;/td&gt;&#34;], &#34;log&#34;: &#34;----------------------------- Captured stdout call -----------------------------\n2026-11-05 22:47:21,431 INFO face_service [5fbba8b336174c53b7157ac7ed76ca52] POST /api/v1/face/detect -&amp;gt; 401 0.06ms\n\n------------------------------ Captured log call -------------------------------\nINFO     face_service:__init__.py:123 POST /api/v1/face/detect -&amp;gt; 401 0.06ms\nINFO     werkzeug:_internal.py:97 127.0.0.1 - - [05/Nov/2026 22:47:21] &amp;quot;POST /api/v1/face/detect HTTP/1.1&amp;quot; 401 -\n\n&#34;}], &#34;tests/test_detect.py::test_detect_rejects_wrong_api_key&#34;: [{&#34;extras&#34;: [], &#34;result&#34;: &#34;Passed&#34;, &#34;testId&#34;: &#34;tests/test_detect.py::test_detect_rejects_wrong_api_key&#34;, &#34;duration&#34;: &#34;14 ms&#34;, &#34;resultsTableRow&#34;: [&#34;&lt;td class=\&#34;col-result\&#34;&gt;Passed&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-testId\&#34;&gt;tests/test_detect.py::test_detect_rejects_wrong_api_key&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-duration\&#34;&gt;14 ms&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-links\&#34;&gt;&lt;/td&gt;&#34;], &#34;log&#34;: &#34;----------------------------- Captured stdout call -----------------------------\n2026-11-05 22:47:21,446 INFO face_service [15a1f1057370444ba04f4e6f83bd316d] POST /api/v1/face/detect -&amp;gt; 401 0.07ms\n\n------------------------------ Captured log call -------------------------------\nINFO     face_service:__init__.py:123 POST /api/v1/face/detect -&amp;gt; 401 0.07ms\nINFO     werkzeug:_internal.py:97 127.0.0.1 - - [05/Nov/2026 22:47:21] &amp;quot;POST /api/v1/face/detect HTTP/1.1&amp;quot; 401 -\n\n&#34;}], &#34;tests/test_detect.py::test_detect_duplicate_key_replays_without_provider_call&#34;: [{&#34;extras&#34;: [], &#34;result&#34;: &#34;Passed&#34;, &#34;testId&#34;: &#34;tests/test_detect.py::test_detect_duplicate_key_replays_without_provider_call&#34;, &#34;duration&#34;: &#34;61 ms&#34;, &#34;resultsTableRow&#34;: [&#34;&lt;td class=\&#34;col-result\&#34;&gt;Passed&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-testId\&#34;&gt;tests/test_detect.py::test_detect_duplicate_key_replays_without_provider_call&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-duration\&#34;&gt;61 ms&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-links\&#34;&gt;&lt;/td&gt;&#34;], &#34;log&#34;: &#34;----------------------------- Captured stdout call -----------------------------\n2026-11-05 22:47:21,493 INFO face_service [803c284871e144bfaae8a57d3b90b37e] POST /api/v1/face/detect -&amp;gt; 200 39.79ms\n2026-11-05 22:47:21,506 INFO face_service [dfc593d0b2194f70b44e916a7403dc04] POST /api/v1/face/detect -&amp;gt; 200 9.66ms\n\n------------------------------ Captured log call -------------------------------\nINFO     werkzeug:_internal.py:97 127.0.0.1 - - [05/Nov/2026 22:47:21] &amp;quot;GET /stats HTTP/1.1&amp;quot; 200 -\nINFO     werkzeug:_internal.py:97 127.0.0.1 - - [05/Nov/2026 22:47:21] &amp;quot;POST /v1/service/v1/image_identify/face_detect HTTP/1.1&amp;quot; 200 -\nINFO     face_service:__init__.py:123 POST /api/v1/face/detect -&amp;gt; 200 39.79ms\nINFO     werkzeug:_internal.py:97 127.0.0.1 - - [05/Nov/2026 22:47:21] &amp;quot;POST /api/v1/face/detect HTTP/1.1&amp;quot; 200 -\nINFO     face_service:__init__.py:123 POST /api/v1/face/detect -&amp;gt; 200 9.66ms\nINFO     werkzeug:_internal.py:97 127.0.0.1 - - [05/Nov/2026 22:47:21] &amp;quot;POST /api/v1/face/detect HTTP/1.1&amp;quot; 200 -\nINFO     werkzeug:_internal.py:97 127.0.0.1 - - [05/Nov/2026 22:47:21] &amp;quot;GET /stats HTTP/1.1&amp;quot; 200 -\n\n&#34;}], &#34;tests/test_detect.py::test_detect_same_key_different_payload_conflicts&#34;: [{&#34;extras&#34;: [], &#34;result&#34;: &#34;Passed&#34;, &#34;testId&#34;: &#34;tests/test_detect.py::test_detect_same_key_different_payload_conflicts&#34;, &#34;duration&#34;: &#34;47 ms&#34;, &#34;resultsTableRow&#34;: [&#34;&lt;td class=\&#34;col-result\&#34;&gt;Passed&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-testId\&#34;&gt;tests/test_detect.py::test_detect_same_key_different_payload_conflicts&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-duration\&#34;&gt;47 ms&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-links\&#34;&gt;&lt;/td&gt;&#34;], &#34;log&#34;: &#34;----------------------------- Captured stdout call -----------------------------\n2026-11-05 22:47:21,544 INFO face_service [765c22fb26db4b96b52baee597633b19] POST /api/v1/face/detect -&amp;gt; 200 30.18ms\n2026-11-05 22:47:21,557 INFO face_service [f6c01c547f254ff582b88ba9c4c5f8f7] POST /api/v1/face/detect -&amp;gt; 409 10.28ms\n\n------------------------------ Captured log call -------------------------------\nINFO     werkzeug:_internal.py:97 127.0.0.1 - - [05/Nov/2026 22:47:21] &amp;quot;POST /v1/service/v1/image_identify/face_detect HTTP/1.1&amp;quot; 200 -\nINFO     face_service:__init__.py:123 POST /api/v1/face/detect -&amp;gt; 200 30.18ms\nINFO     werkzeug:_internal.py:97 127.0.0.1 - - [05/Nov/2026 22:47:21] &amp;quot;POST /api/v1/face/detect HTTP/1.1&amp;quot; 200 -\nINFO     face_service:__init__.py:123 POST /api/v1/face/detect -&amp;gt; 409 10.28ms\nINFO     werkzeug:_internal.py:97 127.0.0.1 - - [05/Nov/2026 22:47:21] &amp;quot;POST /api/v1/face/detect HTTP/1.1&amp;quot; 409 -\n\n&#34;}], &#34;tests/test_detect.py::test_detect_cors_preflight_without_api_key&#34;: [{&#34;extras&#34;: [], &#34;result&#34;: &#34;Passed&#34;, &#34;testId&#34;: &#34;tests/test_detect.py::test_detect_cors_preflight_without_api_key&#34;, &#34;duration&#34;: &#34;4 ms&#34;, &#34;resultsTableRow&#34;: [&#34;&lt;td class=\&#34;col-result\&#34;&gt;Passed&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-testId\&#34;&gt;tests/test_detect.py::test_detect_cors_preflight_without_api_key&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-duration\&#34;&gt;4 ms&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-links\&#34;&gt;&lt;/td&gt;&#34;], &#34;log&#34;: &#34;----------------------------- Captured stdout call -----------------------------\n2026-11-05 22:47:21,561 INFO face_service [41a225df5eb44f34befc1bd4f8093018] OPTIONS /api/v1/face/detect -&amp;gt; 200 0.11ms\n\n------------------------------ Captured log call -------------------------------\nINFO     face_service:__init__.py:123 OPTIONS /api/v1/face/detect -&amp;gt; 200 0.11ms\nINFO     werkzeug:_internal.py:97 127.0.0.1 - - [05/Nov/2026 22:47:21] &amp;quot;OPTIONS /api/v1/face/detect HTTP/1.1&amp;quot; 200 -\n\n&#34;}], &#34;tests/test_health_contract.py::test_health_is_public&#34;: [{&#34;extras&#34;: [], &#34;result&#34;: &#34;Passed&#34;, &#34;testId&#34;: &#34;tests/test_health_contract.py::test_health_is_public&#34;, &#34;duration&#34;: &#34;4 ms&#34;, &#34;resultsTableRow&#34;: [&#34;&lt;td class=\&#34;col-result\&#34;&gt;Passed&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-testId\&#34;&gt;tests/test_health_contract.py::test_health_is_public&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-duration\&#34;&gt;4 ms&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-links\&#34;&gt;&lt;/td&gt;&#34;], &#34;log&#34;: &#34;----------------------------- Captured stdout call -----------------------------\n2026-11-05 22:47:21,567 INFO face_service [786d7ea5849a4ac69adb784aefcacb52] GET /health -&amp;gt; 200 1.19ms\n\n------------------------------ Captured log call -------------------------------\nINFO     face_service:__init__.py:123 GET /health -&amp;gt; 200 1.19ms\nINFO     werkzeug:_internal.py:97 127.0.0.1 - - [05/Nov/2026 22:47:21] &amp;quot;GET /health HTTP/1.1&amp;quot; 200 -\n\n&#34;}], &#34;tests/test_health_contract.py::test_health_cors_allowed&#34;: [{&#34;extras&#34;: [], &#34;result&#34;: &#34;Passed&#34;, &#34;testId&#34;: &#34;tests/test_health_contract.py::test_health_cors_allowed&#34;, &#34;duration&#34;: &#34;4 ms&#34;, &#34;resultsTableRow&#34;: [&#34;&lt;td class=\&#34;col-result\&#34;&gt;Passed&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-testId\&#34;&gt;tests/test_health_contract.py::test_health_cors_allowed&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-duration\&#34;&gt;4 ms&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-links\&#34;&gt;&lt;/td&gt;&#34;], &#34;log&#34;: &#34;----------------------------- Captured stdout call -----------------------------\n2026-11-05 22:47:21,572 INFO face_service [ed5ea5b9e4ee4e7ba124b5cef4a87171] GET /health -&amp;gt; 200 1.14ms\n\n------------------------------ Captured log call -------------------------------\nINFO     face_service:__init__.py:123 GET /health -&amp;gt; 200 1.14ms\nINFO     werkzeug:_internal.py:97 127.0.0.1 - - [05/Nov/2026 22:47:21] &amp;quot;GET /health HTTP/1.1&amp;quot; 200 -\n\n&#34;}], &#34;tests/test_health_contract.py::test_cors_disallowed_origin_has_no_header&#34;: [{&#34;extras&#34;: [], &#34;result&#34;: &#34;Passed&#34;, &#34;testId&#34;: &#34;tests/test_health_contract.py::test_cors_disallowed_origin_has_no_header&#34;, &#34;duration&#34;: &#34;4 ms&#34;, &#34;resultsTableRow&#34;: [&#34;&lt;td class=\&#34;col-result\&#34;&gt;Passed&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-testId\&#34;&gt;tests/test_health_contract.py::test_cors_disallowed_origin_has_no_header&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-duration\&#34;&gt;4 ms&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-links\&#34;&gt;&lt;/td&gt;&#34;], &#34;log&#34;: &#34;----------------------------- Captured stdout call -----------------------------\n2026-11-05 22:47:21,577 INFO face_service [e4e9cea51fa445c4abd4347548d65626] GET /health -&amp;gt; 200 1.24ms\n\n------------------------------ Captured log call -------------------------------\nINFO     face_service:__init__.py:123 GET /health -&amp;gt; 200 1.24ms\nINFO     werkzeug:_internal.py:97 127.0.0.1 - - [05/Nov/2026 22:47:21] &amp;quot;GET /health HTTP/1.1&amp;quot; 200 -\n\n&#34;}], &#34;tests/test_health_contract.py::test_unknown_route_is_json&#34;: [{&#34;extras&#34;: [], &#34;result&#34;: &#34;Passed&#34;, &#34;testId&#34;: &#34;tests/test_health_contract.py::test_unknown_route_is_json&#34;, &#34;duration&#34;: &#34;3 ms&#34;, &#34;resultsTableRow&#34;: [&#34;&lt;td class=\&#34;col-result\&#34;&gt;Passed&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-testId\&#34;&gt;tests/test_health_contract.py::test_unknown_route_is_json&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-duration\&#34;&gt;3 ms&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-links\&#34;&gt;&lt;/td&gt;&#34;], &#34;log&#34;: &#34;----------------------------- Captured stdout call -----------------------------\n2026-11-05 22:47:21,581 INFO face_service [d9dd81f3941b4fcabd17b350025c39b0] GET /api/v1/face/no-such-route -&amp;gt; 404 0.07ms\n\n------------------------------ Captured log call -------------------------------\nINFO     face_service:__init__.py:123 GET /api/v1/face/no-such-route -&amp;gt; 404 0.07ms\nINFO     werkzeug:_internal.py:97 127.0.0.1 - - [05/Nov/2026 22:47:21] &amp;quot;GET /api/v1/face/no-such-route HTTP/1.1&amp;quot; 404 -\n\n&#34;}], &#34;tests/test_health_contract.py::test_method_not_allowed_is_json&#34;: [{&#34;extras&#34;: [], &#34;result&#34;: &#34;Passed&#34;, &#34;testId&#34;: &#34;tests/test_health_contract.py::test_method_not_allowed_is_json&#34;, &#34;duration&#34;: &#34;3 ms&#34;, &#34;resultsTableRow&#34;: [&#34;&lt;td class=\&#34;col-result\&#34;&gt;Passed&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-testId\&#34;&gt;tests/test_health_contract.py::test_method_not_allowed_is_json&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-duration\&#34;&gt;3 ms&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-links\&#34;&gt;&lt;/td&gt;&#34;], &#34;log&#34;: &#34;----------------------------- Captured stdout call -----------------------------\n2026-11-05 22:47:21,585 INFO face_service [9a8a69a03ae04e2c8b4a5863c01bd91e] DELETE /health -&amp;gt; 405 0.06ms\n\n------------------------------ Captured log call -------------------------------\nINFO     face_service:__init__.py:123 DELETE /health -&amp;gt; 405 0.06ms\nINFO     werkzeug:_internal.py:97 127.0.0.1 - - [05/Nov/2026 22:47:21] &amp;quot;DELETE /health HTTP/1.1&amp;quot; 405 -\n\n&#34;}], &#34;tests/test_health_contract.py::test_custom_request_id_echoed&#34;: [{&#34;extras&#34;: [], &#34;result&#34;: &#34;Passed&#34;, &#34;testId&#34;: &#34;tests/test_health_contract.py::test_custom_request_id_echoed&#34;, &#34;duration&#34;: &#34;4 ms&#34;, &#34;resultsTableRow&#34;: [&#34;&lt;td class=\&#34;col-result\&#34;&gt;Passed&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-testId\&#34;&gt;tests/test_health_contract.py::test_custom_request_id_echoed&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-duration\&#34;&gt;4 ms&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-links\&#34;&gt;&lt;/td&gt;&#34;], &#34;log&#34;: &#34;----------------------------- Captured stdout call -----------------------------\n2026-11-05 22:47:21,589 INFO face_service [face-contract-2026] GET /health -&amp;gt; 200 1.21ms\n\n------------------------------ Captured log call -------------------------------\nINFO     face_service:__init__.py:123 GET /health -&amp;gt; 200 1.21ms\nINFO     werkzeug:_internal.py:97 127.0.0.1 - - [05/Nov/2026 22:47:21] &amp;quot;GET /health HTTP/1.1&amp;quot; 200 -\n\n&#34;}], &#34;tests/test_health_contract.py::test_invalid_request_id_replaced&#34;: [{&#34;extras&#34;: [], &#34;result&#34;: &#34;Passed&#34;, &#34;testId&#34;: &#34;tests/test_health_contract.py::test_invalid_request_id_replaced&#34;, &#34;duration&#34;: &#34;4 ms&#34;, &#34;resultsTableRow&#34;: [&#34;&lt;td class=\&#34;col-result\&#34;&gt;Passed&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-testId\&#34;&gt;tests/test_health_contract.py::test_invalid_request_id_replaced&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-duration\&#34;&gt;4 ms&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-links\&#34;&gt;&lt;/td&gt;&#34;], &#34;log&#34;: &#34;----------------------------- Captured stdout call -----------------------------\n2026-11-05 22:47:21,593 INFO face_service [297e13db8144473fa22b80a370b752a9] GET /health -&amp;gt; 200 1.14ms\n\n------------------------------ Captured log call -------------------------------\nINFO     face_service:__init__.py:123 GET /health -&amp;gt; 200 1.14ms\nINFO     werkzeug:_internal.py:97 127.0.0.1 - - [05/Nov/2026 22:47:21] &amp;quot;GET /health HTTP/1.1&amp;quot; 200 -\n\n&#34;}], &#34;tests/test_provider_signature.py::test_valid_signature_is_accepted&#34;: [{&#34;extras&#34;: [], &#34;result&#34;: &#34;Passed&#34;, &#34;testId&#34;: &#34;tests/test_provider_signature.py::test_valid_signature_is_accepted&#34;, &#34;duration&#34;: &#34;24 ms&#34;, &#34;resultsTableRow&#34;: [&#34;&lt;td class=\&#34;col-result\&#34;&gt;Passed&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-testId\&#34;&gt;tests/test_provider_signature.py::test_valid_signature_is_accepted&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-duration\&#34;&gt;24 ms&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-links\&#34;&gt;&lt;/td&gt;&#34;], &#34;log&#34;: &#34;------------------------------ Captured log call -------------------------------\nINFO     werkzeug:_internal.py:97 127.0.0.1 - - [05/Nov/2026 22:47:21] &amp;quot;POST /v1/service/v1/image_identify/face_detect HTTP/1.1&amp;quot; 200 -\n\n&#34;}], &#34;tests/test_provider_signature.py::test_missing_checksum_rejected&#34;: [{&#34;extras&#34;: [], &#34;result&#34;: &#34;Passed&#34;, &#34;testId&#34;: &#34;tests/test_provider_signature.py::test_missing_checksum_rejected&#34;, &#34;duration&#34;: &#34;3 ms&#34;, &#34;resultsTableRow&#34;: [&#34;&lt;td class=\&#34;col-result\&#34;&gt;Passed&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-testId\&#34;&gt;tests/test_provider_signature.py::test_missing_checksum_rejected&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-duration\&#34;&gt;3 ms&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-links\&#34;&gt;&lt;/td&gt;&#34;], &#34;log&#34;: &#34;------------------------------ Captured log call -------------------------------\nINFO     werkzeug:_internal.py:97 127.0.0.1 - - [05/Nov/2026 22:47:21] &amp;quot;POST /v1/service/v1/image_identify/face_detect HTTP/1.1&amp;quot; 401 -\n\n&#34;}], &#34;tests/test_provider_signature.py::test_tampered_checksum_rejected&#34;: [{&#34;extras&#34;: [], &#34;result&#34;: &#34;Passed&#34;, &#34;testId&#34;: &#34;tests/test_provider_signature.py::test_tampered_checksum_rejected&#34;, &#34;duration&#34;: &#34;3 ms&#34;, &#34;resultsTableRow&#34;: [&#34;&lt;td class=\&#34;col-result\&#34;&gt;Passed&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-testId\&#34;&gt;tests/test_provider_signature.py::test_tampered_checksum_rejected&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-duration\&#34;&gt;3 ms&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-links\&#34;&gt;&lt;/td&gt;&#34;], &#34;log&#34;: &#34;------------------------------ Captured log call -------------------------------\nINFO     werkzeug:_internal.py:97 127.0.0.1 - - [05/Nov/2026 22:47:21] &amp;quot;POST /v1/service/v1/image_identify/face_detect HTTP/1.1&amp;quot; 401 -\n\n&#34;}], &#34;tests/test_provider_signature.py::test_expired_timestamp_rejected&#34;: [{&#34;extras&#34;: [], &#34;result&#34;: &#34;Passed&#34;, &#34;testId&#34;: &#34;tests/test_provider_signature.py::test_expired_timestamp_rejected&#34;, &#34;duration&#34;: &#34;3 ms&#34;, &#34;resultsTableRow&#34;: [&#34;&lt;td class=\&#34;col-result\&#34;&gt;Passed&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-testId\&#34;&gt;tests/test_provider_signature.py::test_expired_timestamp_rejected&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-duration\&#34;&gt;3 ms&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-links\&#34;&gt;&lt;/td&gt;&#34;], &#34;log&#34;: &#34;------------------------------ Captured log call -------------------------------\nINFO     werkzeug:_internal.py:97 127.0.0.1 - - [05/Nov/2026 22:47:21] &amp;quot;POST /v1/service/v1/image_identify/face_detect HTTP/1.1&amp;quot; 401 -\n\n&#34;}], &#34;tests/test_provider_signature.py::test_wrong_app_id_rejected&#34;: [{&#34;extras&#34;: [], &#34;result&#34;: &#34;Passed&#34;, &#34;testId&#34;: &#34;tests/test_provider_signature.py::test_wrong_app_id_rejected&#34;, &#34;duration&#34;: &#34;3 ms&#34;, &#34;resultsTableRow&#34;: [&#34;&lt;td class=\&#34;col-result\&#34;&gt;Passed&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-testId\&#34;&gt;tests/test_provider_signature.py::test_wrong_app_id_rejected&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-duration\&#34;&gt;3 ms&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-links\&#34;&gt;&lt;/td&gt;&#34;], &#34;log&#34;: &#34;------------------------------ Captured log call -------------------------------\nINFO     werkzeug:_internal.py:97 127.0.0.1 - - [05/Nov/2026 22:47:21] &amp;quot;POST /v1/service/v1/image_identify/face_detect HTTP/1.1&amp;quot; 401 -\n\n&#34;}], &#34;tests/test_provider_signature.py::test_app_maps_signature_failure_to_502&#34;: [{&#34;extras&#34;: [], &#34;result&#34;: &#34;Passed&#34;, &#34;testId&#34;: &#34;tests/test_provider_signature.py::test_app_maps_signature_failure_to_502&#34;, &#34;duration&#34;: &#34;44 ms&#34;, &#34;resultsTableRow&#34;: [&#34;&lt;td class=\&#34;col-result\&#34;&gt;Passed&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-testId\&#34;&gt;tests/test_provider_signature.py::test_app_maps_signature_failure_to_502&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-duration\&#34;&gt;44 ms&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-links\&#34;&gt;&lt;/td&gt;&#34;], &#34;log&#34;: &#34;---------------------------- Captured stdout setup -----------------------------\n2026-11-05 22:47:21,669 INFO face_service [-] Face service started env=test provider=iflytek db=C:\\Users\\LENOVO\\AppData\\Local\\Temp\\pytest-of-LENOVO\\pytest-7\\bad-face-api0\\face.db\n\n------------------------------ Captured log setup ------------------------------\nINFO     face_service:__init__.py:201 Face service started env=test provider=iflytek db=C:\\Users\\LENOVO\\AppData\\Local\\Temp\\pytest-of-LENOVO\\pytest-7\\bad-face-api0\\face.db\n\n----------------------------- Captured stdout call -----------------------------\n2026-11-05 22:47:21,677 INFO face_service [8fb3326b5f3a4bae9dee22fcb4ab50fc] POST /api/v1/face/compare -&amp;gt; 502 3.58ms\n\n------------------------------ Captured log call -------------------------------\nINFO     werkzeug:_internal.py:97 127.0.0.1 - - [05/Nov/2026 22:47:21] &amp;quot;POST /v1/service/v1/image_identify/face_compare HTTP/1.1&amp;quot; 401 -\nINFO     face_service:__init__.py:123 POST /api/v1/face/compare -&amp;gt; 502 3.58ms\nINFO     werkzeug:_internal.py:97 127.0.0.1 - - [05/Nov/2026 22:47:21] &amp;quot;POST /api/v1/face/compare HTTP/1.1&amp;quot; 502 -\n\n&#34;}], &#34;tests/test_search_register.py::test_register_success&#34;: [{&#34;extras&#34;: [], &#34;result&#34;: &#34;Passed&#34;, &#34;testId&#34;: &#34;tests/test_search_register.py::test_register_success&#34;, &#34;duration&#34;: &#34;31 ms&#34;, &#34;resultsTableRow&#34;: [&#34;&lt;td class=\&#34;col-result\&#34;&gt;Passed&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-testId\&#34;&gt;tests/test_search_register.py::test_register_success&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-duration\&#34;&gt;31 ms&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-links\&#34;&gt;&lt;/td&gt;&#34;], &#34;log&#34;: &#34;----------------------------- Captured stdout call -----------------------------\n2026-11-05 22:47:21,711 INFO face_service [fc735e8b980541bf86dffbfcf5775cfe] POST /api/v1/face/register -&amp;gt; 201 27.61ms\n\n------------------------------ Captured log call -------------------------------\nINFO     werkzeug:_internal.py:97 127.0.0.1 - - [05/Nov/2026 22:47:21] &amp;quot;POST /v1/service/v1/image_identify/face_detect HTTP/1.1&amp;quot; 200 -\nINFO     face_service:__init__.py:123 POST /api/v1/face/register -&amp;gt; 201 27.61ms\nINFO     werkzeug:_internal.py:97 127.0.0.1 - - [05/Nov/2026 22:47:21] &amp;quot;POST /api/v1/face/register HTTP/1.1&amp;quot; 201 -\n\n&#34;}], &#34;tests/test_search_register.py::test_register_duplicate_person_conflicts&#34;: [{&#34;extras&#34;: [], &#34;result&#34;: &#34;Passed&#34;, &#34;testId&#34;: &#34;tests/test_search_register.py::test_register_duplicate_person_conflicts&#34;, &#34;duration&#34;: &#34;76 ms&#34;, &#34;resultsTableRow&#34;: [&#34;&lt;td class=\&#34;col-result\&#34;&gt;Passed&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-testId\&#34;&gt;tests/test_search_register.py::test_register_duplicate_person_conflicts&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-duration\&#34;&gt;76 ms&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-links\&#34;&gt;&lt;/td&gt;&#34;], &#34;log&#34;: &#34;----------------------------- Captured stdout call -----------------------------\n2026-11-05 22:47:21,752 INFO face_service [1f910dc71d8b4579ad937f1a447ad3dd] POST /api/v1/face/register -&amp;gt; 201 35.58ms\n2026-11-05 22:47:21,787 INFO face_service [8b695c9a3c134dac9d9e9c7b958121ec] POST /api/v1/face/register -&amp;gt; 409 33.29ms\n\n------------------------------ Captured log call -------------------------------\nINFO     werkzeug:_internal.py:97 127.0.0.1 - - [05/Nov/2026 22:47:21] &amp;quot;POST /v1/service/v1/image_identify/face_detect HTTP/1.1&amp;quot; 200 -\nINFO     face_service:__init__.py:123 POST /api/v1/face/register -&amp;gt; 201 35.58ms\nINFO     werkzeug:_internal.py:97 127.0.0.1 - - [05/Nov/2026 22:47:21] &amp;quot;POST /api/v1/face/register HTTP/1.1&amp;quot; 201 -\nINFO     werkzeug:_internal.py:97 127.0.0.1 - - [05/Nov/2026 22:47:21] &amp;quot;POST /v1/service/v1/image_identify/face_detect HTTP/1.1&amp;quot; 200 -\nINFO     face_service:__init__.py:123 POST /api/v1/face/register -&amp;gt; 409 33.29ms\nINFO     werkzeug:_internal.py:97 127.0.0.1 - - [05/Nov/2026 22:47:21] &amp;quot;POST /api/v1/face/register HTTP/1.1&amp;quot; 409 -\n\n&#34;}], &#34;tests/test_search_register.py::test_register_missing_person_id&#34;: [{&#34;extras&#34;: [], &#34;result&#34;: &#34;Passed&#34;, &#34;testId&#34;: &#34;tests/test_search_register.py::test_register_missing_person_id&#34;, &#34;duration&#34;: &#34;4 ms&#34;, &#34;resultsTableRow&#34;: [&#34;&lt;td class=\&#34;col-result\&#34;&gt;Passed&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-testId\&#34;&gt;tests/test_search_register.py::test_register_missing_person_id&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-duration\&#34;&gt;4 ms&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-links\&#34;&gt;&lt;/td&gt;&#34;], &#34;log&#34;: &#34;----------------------------- Captured stdout call -----------------------------\n2026-11-05 22:47:21,794 INFO face_service [ce10f66aa2da48f69a2df901d53b28a1] POST /api/v1/face/register -&amp;gt; 400 0.75ms\n\n------------------------------ Captured log call -------------------------------\nINFO     face_service:__init__.py:123 POST /api/v1/face/register -&amp;gt; 400 0.75ms\nINFO     werkzeug:_internal.py:97 127.0.0.1 - - [05/Nov/2026 22:47:21] &amp;quot;POST /api/v1/face/register HTTP/1.1&amp;quot; 400 -\n\n&#34;}], &#34;tests/test_search_register.py::test_register_invalid_person_id&#34;: [{&#34;extras&#34;: [], &#34;result&#34;: &#34;Passed&#34;, &#34;testId&#34;: &#34;tests/test_search_register.py::test_register_invalid_person_id&#34;, &#34;duration&#34;: &#34;4 ms&#34;, &#34;resultsTableRow&#34;: [&#34;&lt;td class=\&#34;col-result\&#34;&gt;Passed&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-testId\&#34;&gt;tests/test_search_register.py::test_register_invalid_person_id&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-duration\&#34;&gt;4 ms&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-links\&#34;&gt;&lt;/td&gt;&#34;], &#34;log&#34;: &#34;----------------------------- Captured stdout call -----------------------------\n2026-11-05 22:47:21,798 INFO face_service [f4ba98ebfc4c4aa58b4523d35d762f7e] POST /api/v1/face/register -&amp;gt; 400 0.63ms\n\n------------------------------ Captured log call -------------------------------\nINFO     face_service:__init__.py:123 POST /api/v1/face/register -&amp;gt; 400 0.63ms\nINFO     werkzeug:_internal.py:97 127.0.0.1 - - [05/Nov/2026 22:47:21] &amp;quot;POST /api/v1/face/register HTTP/1.1&amp;quot; 400 -\n\n&#34;}], &#34;tests/test_search_register.py::test_register_missing_image&#34;: [{&#34;extras&#34;: [], &#34;result&#34;: &#34;Passed&#34;, &#34;testId&#34;: &#34;tests/test_search_register.py::test_register_missing_image&#34;, &#34;duration&#34;: &#34;3 ms&#34;, &#34;resultsTableRow&#34;: [&#34;&lt;td class=\&#34;col-result\&#34;&gt;Passed&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-testId\&#34;&gt;tests/test_search_register.py::test_register_missing_image&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-duration\&#34;&gt;3 ms&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-links\&#34;&gt;&lt;/td&gt;&#34;], &#34;log&#34;: &#34;----------------------------- Captured stdout call -----------------------------\n2026-11-05 22:47:21,802 INFO face_service [bfa7ba2407b04e31be6819998ea72e92] POST /api/v1/face/register -&amp;gt; 400 0.12ms\n\n------------------------------ Captured log call -------------------------------\nINFO     face_service:__init__.py:123 POST /api/v1/face/register -&amp;gt; 400 0.12ms\nINFO     werkzeug:_internal.py:97 127.0.0.1 - - [05/Nov/2026 22:47:21] &amp;quot;POST /api/v1/face/register HTTP/1.1&amp;quot; 400 -\n\n&#34;}], &#34;tests/test_search_register.py::test_register_oversized_image&#34;: [{&#34;extras&#34;: [], &#34;result&#34;: &#34;Passed&#34;, &#34;testId&#34;: &#34;tests/test_search_register.py::test_register_oversized_image&#34;, &#34;duration&#34;: &#34;12 ms&#34;, &#34;resultsTableRow&#34;: [&#34;&lt;td class=\&#34;col-result\&#34;&gt;Passed&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-testId\&#34;&gt;tests/test_search_register.py::test_register_oversized_image&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-duration\&#34;&gt;12 ms&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-links\&#34;&gt;&lt;/td&gt;&#34;], &#34;log&#34;: &#34;----------------------------- Captured stdout call -----------------------------\n2026-11-05 22:47:21,812 INFO face_service [61bf06b1b0f24fd2990c25b860126639] POST /api/v1/face/register -&amp;gt; 413 7.63ms\n\n------------------------------ Captured log call -------------------------------\nINFO     face_service:__init__.py:123 POST /api/v1/face/register -&amp;gt; 413 7.63ms\nINFO     werkzeug:_internal.py:97 127.0.0.1 - - [05/Nov/2026 22:47:21] &amp;quot;POST /api/v1/face/register HTTP/1.1&amp;quot; 413 -\n\n&#34;}], &#34;tests/test_search_register.py::test_search_empty_group&#34;: [{&#34;extras&#34;: [], &#34;result&#34;: &#34;Passed&#34;, &#34;testId&#34;: &#34;tests/test_search_register.py::test_search_empty_group&#34;, &#34;duration&#34;: &#34;6 ms&#34;, &#34;resultsTableRow&#34;: [&#34;&lt;td class=\&#34;col-result\&#34;&gt;Passed&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-testId\&#34;&gt;tests/test_search_register.py::test_search_empty_group&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-duration\&#34;&gt;6 ms&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-links\&#34;&gt;&lt;/td&gt;&#34;], &#34;log&#34;: &#34;----------------------------- Captured stdout call -----------------------------\n2026-11-05 22:47:21,820 INFO face_service [0b15ff5253344fc989cd837402d4d2f9] POST /api/v1/face/search -&amp;gt; 200 1.81ms\n\n------------------------------ Captured log call -------------------------------\nINFO     face_service:__init__.py:123 POST /api/v1/face/search -&amp;gt; 200 1.81ms\nINFO     werkzeug:_internal.py:97 127.0.0.1 - - [05/Nov/2026 22:47:21] &amp;quot;POST /api/v1/face/search HTTP/1.1&amp;quot; 200 -\n\n&#34;}], &#34;tests/test_search_register.py::test_search_same_face_finds_registered_person&#34;: [{&#34;extras&#34;: [], &#34;result&#34;: &#34;Passed&#34;, &#34;testId&#34;: &#34;tests/test_search_register.py::test_search_same_face_finds_registered_person&#34;, &#34;duration&#34;: &#34;68 ms&#34;, &#34;resultsTableRow&#34;: [&#34;&lt;td class=\&#34;col-result\&#34;&gt;Passed&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-testId\&#34;&gt;tests/test_search_register.py::test_search_same_face_finds_registered_person&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-duration\&#34;&gt;68 ms&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-links\&#34;&gt;&lt;/td&gt;&#34;], &#34;log&#34;: &#34;----------------------------- Captured stdout call -----------------------------\n2026-11-05 22:47:21,853 INFO face_service [aed92b9b686045fc8cdc8003a3a2ede6] POST /api/v1/face/register -&amp;gt; 201 28.69ms\n2026-11-05 22:47:21,888 INFO face_service [b459cf23d5bf42e98819fed6993da2d7] POST /api/v1/face/search -&amp;gt; 200 32.25ms\n\n------------------------------ Captured log call -------------------------------\nINFO     werkzeug:_internal.py:97 127.0.0.1 - - [05/Nov/2026 22:47:21] &amp;quot;POST /v1/service/v1/image_identify/face_detect HTTP/1.1&amp;quot; 200 -\nINFO     face_service:__init__.py:123 POST /api/v1/face/register -&amp;gt; 201 28.69ms\nINFO     werkzeug:_internal.py:97 127.0.0.1 - - [05/Nov/2026 22:47:21] &amp;quot;POST /api/v1/face/register HTTP/1.1&amp;quot; 201 -\nINFO     werkzeug:_internal.py:97 127.0.0.1 - - [05/Nov/2026 22:47:21] &amp;quot;POST /v1/service/v1/image_identify/face_compare HTTP/1.1&amp;quot; 200 -\nINFO     face_service:__init__.py:123 POST /api/v1/face/search -&amp;gt; 200 32.25ms\nINFO     werkzeug:_internal.py:97 127.0.0.1 - - [05/Nov/2026 22:47:21] &amp;quot;POST /api/v1/face/search HTTP/1.1&amp;quot; 200 -\n\n&#34;}], &#34;tests/test_search_register.py::test_search_different_face_is_not_same_person&#34;: [{&#34;extras&#34;: [], &#34;result&#34;: &#34;Passed&#34;, &#34;testId&#34;: &#34;tests/test_search_register.py::test_search_different_face_is_not_same_person&#34;, &#34;duration&#34;: &#34;66 ms&#34;, &#34;resultsTableRow&#34;: [&#34;&lt;td class=\&#34;col-result\&#34;&gt;Passed&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-testId\&#34;&gt;tests/test_search_register.py::test_search_different_face_is_not_same_person&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-duration\&#34;&gt;66 ms&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-links\&#34;&gt;&lt;/td&gt;&#34;], &#34;log&#34;: &#34;----------------------------- Captured stdout call -----------------------------\n2026-11-05 22:47:21,921 INFO face_service [1fc4859e8b66466cb994061ed748caf4] POST /api/v1/face/register -&amp;gt; 201 28.46ms\n2026-11-05 22:47:21,957 INFO face_service [01ced693fadb4575be87b09f4d537940] POST /api/v1/face/search -&amp;gt; 200 30.76ms\n\n------------------------------ Captured log call -------------------------------\nINFO     werkzeug:_internal.py:97 127.0.0.1 - - [05/Nov/2026 22:47:21] &amp;quot;POST /v1/service/v1/image_identify/face_detect HTTP/1.1&amp;quot; 200 -\nINFO     face_service:__init__.py:123 POST /api/v1/face/register -&amp;gt; 201 28.46ms\nINFO     werkzeug:_internal.py:97 127.0.0.1 - - [05/Nov/2026 22:47:21] &amp;quot;POST /api/v1/face/register HTTP/1.1&amp;quot; 201 -\nINFO     werkzeug:_internal.py:97 127.0.0.1 - - [05/Nov/2026 22:47:21] &amp;quot;POST /v1/service/v1/image_identify/face_compare HTTP/1.1&amp;quot; 200 -\nINFO     face_service:__init__.py:123 POST /api/v1/face/search -&amp;gt; 200 30.76ms\nINFO     werkzeug:_internal.py:97 127.0.0.1 - - [05/Nov/2026 22:47:21] &amp;quot;POST /api/v1/face/search HTTP/1.1&amp;quot; 200 -\n\n&#34;}], &#34;tests/test_search_register.py::test_search_missing_image&#34;: [{&#34;extras&#34;: [], &#34;result&#34;: &#34;Passed&#34;, &#34;testId&#34;: &#34;tests/test_search_register.py::test_search_missing_image&#34;, &#34;duration&#34;: &#34;3 ms&#34;, &#34;resultsTableRow&#34;: [&#34;&lt;td class=\&#34;col-result\&#34;&gt;Passed&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-testId\&#34;&gt;tests/test_search_register.py::test_search_missing_image&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-duration\&#34;&gt;3 ms&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-links\&#34;&gt;&lt;/td&gt;&#34;], &#34;log&#34;: &#34;----------------------------- Captured stdout call -----------------------------\n2026-11-05 22:47:21,961 INFO face_service [e88e705c1ced4332a930bfad685e886b] POST /api/v1/face/search -&amp;gt; 400 0.12ms\n\n------------------------------ Captured log call -------------------------------\nINFO     face_service:__init__.py:123 POST /api/v1/face/search -&amp;gt; 400 0.12ms\nINFO     werkzeug:_internal.py:97 127.0.0.1 - - [05/Nov/2026 22:47:21] &amp;quot;POST /api/v1/face/search HTTP/1.1&amp;quot; 400 -\n\n&#34;}], &#34;tests/test_search_register.py::test_search_top_k_zero&#34;: [{&#34;extras&#34;: [], &#34;result&#34;: &#34;Passed&#34;, &#34;testId&#34;: &#34;tests/test_search_register.py::test_search_top_k_zero&#34;, &#34;duration&#34;: &#34;4 ms&#34;, &#34;resultsTableRow&#34;: [&#34;&lt;td class=\&#34;col-result\&#34;&gt;Passed&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-testId\&#34;&gt;tests/test_search_register.py::test_search_top_k_zero&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-duration\&#34;&gt;4 ms&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-links\&#34;&gt;&lt;/td&gt;&#34;], &#34;log&#34;: &#34;----------------------------- Captured stdout call -----------------------------\n2026-11-05 22:47:21,966 INFO face_service [c30644b7affe4a699eff0923f058d296] POST /api/v1/face/search -&amp;gt; 400 0.62ms\n\n------------------------------ Captured log call -------------------------------\nINFO     face_service:__init__.py:123 POST /api/v1/face/search -&amp;gt; 400 0.62ms\nINFO     werkzeug:_internal.py:97 127.0.0.1 - - [05/Nov/2026 22:47:21] &amp;quot;POST /api/v1/face/search HTTP/1.1&amp;quot; 400 -\n\n&#34;}], &#34;tests/test_search_register.py::test_search_top_k_too_large&#34;: [{&#34;extras&#34;: [], &#34;result&#34;: &#34;Passed&#34;, &#34;testId&#34;: &#34;tests/test_search_register.py::test_search_top_k_too_large&#34;, &#34;duration&#34;: &#34;4 ms&#34;, &#34;resultsTableRow&#34;: [&#34;&lt;td class=\&#34;col-result\&#34;&gt;Passed&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-testId\&#34;&gt;tests/test_search_register.py::test_search_top_k_too_large&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-duration\&#34;&gt;4 ms&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-links\&#34;&gt;&lt;/td&gt;&#34;], &#34;log&#34;: &#34;----------------------------- Captured stdout call -----------------------------\n2026-11-05 22:47:21,970 INFO face_service [7d35ca66e62649e58d678c52c5294572] POST /api/v1/face/search -&amp;gt; 400 0.77ms\n\n------------------------------ Captured log call -------------------------------\nINFO     face_service:__init__.py:123 POST /api/v1/face/search -&amp;gt; 400 0.77ms\nINFO     werkzeug:_internal.py:97 127.0.0.1 - - [05/Nov/2026 22:47:21] &amp;quot;POST /api/v1/face/search HTTP/1.1&amp;quot; 400 -\n\n&#34;}], &#34;tests/test_search_register.py::test_search_top_k_must_be_integer&#34;: [{&#34;extras&#34;: [], &#34;result&#34;: &#34;Passed&#34;, &#34;testId&#34;: &#34;tests/test_search_register.py::test_search_top_k_must_be_integer&#34;, &#34;duration&#34;: &#34;4 ms&#34;, &#34;resultsTableRow&#34;: [&#34;&lt;td class=\&#34;col-result\&#34;&gt;Passed&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-testId\&#34;&gt;tests/test_search_register.py::test_search_top_k_must_be_integer&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-duration\&#34;&gt;4 ms&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-links\&#34;&gt;&lt;/td&gt;&#34;], &#34;log&#34;: &#34;----------------------------- Captured stdout call -----------------------------\n2026-11-05 22:47:21,975 INFO face_service [5569b664aecf4f32a16ff2c71ad9b76f] POST /api/v1/face/search -&amp;gt; 400 0.73ms\n\n------------------------------ Captured log call -------------------------------\nINFO     face_service:__init__.py:123 POST /api/v1/face/search -&amp;gt; 400 0.73ms\nINFO     werkzeug:_internal.py:97 127.0.0.1 - - [05/Nov/2026 22:47:21] &amp;quot;POST /api/v1/face/search HTTP/1.1&amp;quot; 400 -\n\n&#34;}], &#34;tests/test_search_register.py::test_search_top_k_rejects_non_ascii_digits&#34;: [{&#34;extras&#34;: [], &#34;result&#34;: &#34;Passed&#34;, &#34;testId&#34;: &#34;tests/test_search_register.py::test_search_top_k_rejects_non_ascii_digits&#34;, &#34;duration&#34;: &#34;4 ms&#34;, &#34;resultsTableRow&#34;: [&#34;&lt;td class=\&#34;col-result\&#34;&gt;Passed&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-testId\&#34;&gt;tests/test_search_register.py::test_search_top_k_rejects_non_ascii_digits&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-duration\&#34;&gt;4 ms&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-links\&#34;&gt;&lt;/td&gt;&#34;], &#34;log&#34;: &#34;----------------------------- Captured stdout call -----------------------------\n2026-11-05 22:47:21,980 INFO face_service [7e5915a3b02d4e44866e9b9f77ecc8e7] POST /api/v1/face/search -&amp;gt; 400 0.61ms\n\n------------------------------ Captured log call -------------------------------\nINFO     face_service:__init__.py:123 POST /api/v1/face/search -&amp;gt; 400 0.61ms\nINFO     werkzeug:_internal.py:97 127.0.0.1 - - [05/Nov/2026 22:47:21] &amp;quot;POST /api/v1/face/search HTTP/1.1&amp;quot; 400 -\n\n&#34;}], &#34;tests/test_search_register.py::test_search_invalid_group_id&#34;: [{&#34;extras&#34;: [], &#34;result&#34;: &#34;Passed&#34;, &#34;testId&#34;: &#34;tests/test_search_register.py::test_search_invalid_group_id&#34;, &#34;duration&#34;: &#34;4 ms&#34;, &#34;resultsTableRow&#34;: [&#34;&lt;td class=\&#34;col-result\&#34;&gt;Passed&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-testId\&#34;&gt;tests/test_search_register.py::test_search_invalid_group_id&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-duration\&#34;&gt;4 ms&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-links\&#34;&gt;&lt;/td&gt;&#34;], &#34;log&#34;: &#34;----------------------------- Captured stdout call -----------------------------\n2026-11-05 22:47:21,985 INFO face_service [ffc44cfadaad4375a34dec4a730b9df9] POST /api/v1/face/search -&amp;gt; 400 0.57ms\n\n------------------------------ Captured log call -------------------------------\nINFO     face_service:__init__.py:123 POST /api/v1/face/search -&amp;gt; 400 0.57ms\nINFO     werkzeug:_internal.py:97 127.0.0.1 - - [05/Nov/2026 22:47:21] &amp;quot;POST /api/v1/face/search HTTP/1.1&amp;quot; 400 -\n\n&#34;}], &#34;tests/test_search_register.py::test_search_requires_api_key&#34;: [{&#34;extras&#34;: [], &#34;result&#34;: &#34;Passed&#34;, &#34;testId&#34;: &#34;tests/test_search_register.py::test_search_requires_api_key&#34;, &#34;duration&#34;: &#34;4 ms&#34;, &#34;resultsTableRow&#34;: [&#34;&lt;td class=\&#34;col-result\&#34;&gt;Passed&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-testId\&#34;&gt;tests/test_search_register.py::test_search_requires_api_key&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-duration\&#34;&gt;4 ms&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-links\&#34;&gt;&lt;/td&gt;&#34;], &#34;log&#34;: &#34;----------------------------- Captured stdout call -----------------------------\n2026-11-05 22:47:21,988 INFO face_service [d7ef6b30809641d581a755b614d19d1d] POST /api/v1/face/search -&amp;gt; 401 0.06ms\n\n------------------------------ Captured log call -------------------------------\nINFO     face_service:__init__.py:123 POST /api/v1/face/search -&amp;gt; 401 0.06ms\nINFO     werkzeug:_internal.py:97 127.0.0.1 - - [05/Nov/2026 22:47:21] &amp;quot;POST /api/v1/face/search HTTP/1.1&amp;quot; 401 -\n\n&#34;}], &#34;tests/test_search_register.py::test_search_duplicate_key&#34;: [{&#34;extras&#34;: [], &#34;result&#34;: &#34;Passed&#34;, &#34;testId&#34;: &#34;tests/test_search_register.py::test_search_duplicate_key&#34;, &#34;duration&#34;: &#34;587 ms&#34;, &#34;resultsTableRow&#34;: [&#34;&lt;td class=\&#34;col-result\&#34;&gt;Passed&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-testId\&#34;&gt;tests/test_search_register.py::test_search_duplicate_key&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-duration\&#34;&gt;587 ms&lt;/td&gt;&#34;, &#34;&lt;td class=\&#34;col-links\&#34;&gt;&lt;/td&gt;&#34;], &#34;log&#34;: &#34;----------------------------- Captured stdout call -----------------------------\n2026-11-05 22:47:22,022 INFO face_service [29cbd7d1d9ef4f29b6a9e15975808f4b] POST /api/v1/face/register -&amp;gt; 201 28.87ms\n2026-11-05 22:47:22,063 INFO face_service [974956d039934a8da733e4e2f19c1793] POST /api/v1/face/search -&amp;gt; 200 35.92ms\n2026-11-05 22:47:22,076 INFO face_service [3032a502a5d34c339cb21ad50a4ecfef] POST /api/v1/face/search -&amp;gt; 200 8.80ms\n\n------------------------------ Captured log call -------------------------------\nINFO     werkzeug:_internal.py:97 127.0.0.1 - - [05/Nov/2026 22:47:22] &amp;quot;POST /v1/service/v1/image_identify/face_detect HTTP/1.1&amp;quot; 200 -\nINFO     face_service:__init__.py:123 POST /api/v1/face/register -&amp;gt; 201 28.87ms\nINFO     werkzeug:_internal.py:97 127.0.0.1 - - [05/Nov/2026 22:47:22] &amp;quot;POST /api/v1/face/register HTTP/1.1&amp;quot; 201 -\nINFO     werkzeug:_internal.py:97 127.0.0.1 - - [05/Nov/2026 22:47:22] &amp;quot;GET /stats HTTP/1.1&amp;quot; 200 -\nINFO     werkzeug:_internal.py:97 127.0.0.1 - - [05/Nov/2026 22:47:22] &amp;quot;POST /v1/service/v1/image_identify/face_compare HTTP/1.1&amp;quot; 200 -\nINFO     face_service:__init__.py:123 POST /api/v1/face/search -&amp;gt; 200 35.92ms\nINFO     werkzeug:_internal.py:97 127.0.0.1 - - [05/Nov/2026 22:47:22] &amp;quot;POST /api/v1/face/search HTTP/1.1&amp;quot; 200 -\nINFO     face_service:__init__.py:123 POST /api/v1/face/search -&amp;gt; 200 8.80ms\nINFO     werkzeug:_internal.py:97 127.0.0.1 - - [05/Nov/2026 22:47:22] &amp;quot;POST /api/v1/face/search HTTP/1.1&amp;quot; 200 -\nINFO     werkzeug:_internal.py:97 127.0.0.1 - - [05/Nov/2026 22:47:22] &amp;quot;GET /stats HTTP/1.1&amp;quot; 200 -\n\n&#34;}]}, &#34;renderCollapsed&#34;: [&#34;passed&#34;], &#34;initialSort&#34;: &#34;result&#34;, &#34;title&#34;: &#34;pytest-report.html&#34;}"></div>
+    <script>
+      (function(){function r(e,n,t){function o(i,f){if(!n[i]){if(!e[i]){var c="function"==typeof require&&require;if(!f&&c)return c(i,!0);if(u)return u(i,!0);var a=new Error("Cannot find module '"+i+"'");throw a.code="MODULE_NOT_FOUND",a}var p=n[i]={exports:{}};e[i][0].call(p.exports,function(r){var n=e[i][1][r];return o(n||r)},p,p.exports,r,e,n,t)}return n[i].exports}for(var u="function"==typeof require&&require,i=0;i<t.length;i++)o(t[i]);return o}return r})()({1:[function(require,module,exports){
+const { getCollapsedCategory, setCollapsedIds } = require('./storage.js')
+
+class DataManager {
+    setManager(data) {
+        const collapsedCategories = [...getCollapsedCategory(data.renderCollapsed)]
+        const collapsedIds = []
+        const tests = Object.values(data.tests).flat().map((test, index) => {
+            const collapsed = collapsedCategories.includes(test.result.toLowerCase())
+            const id = `test_${index}`
+            if (collapsed) {
+                collapsedIds.push(id)
+            }
+            return {
+                ...test,
+                id,
+                collapsed,
+            }
+        })
+        const dataBlob = { ...data, tests }
+        this.data = { ...dataBlob }
+        this.renderData = { ...dataBlob }
+        setCollapsedIds(collapsedIds)
+    }
+
+    get allData() {
+        return { ...this.data }
+    }
+
+    resetRender() {
+        this.renderData = { ...this.data }
+    }
+
+    setRender(data) {
+        this.renderData.tests = [...data]
+    }
+
+    toggleCollapsedItem(id) {
+        this.renderData.tests = this.renderData.tests.map((test) =>
+            test.id === id ? { ...test, collapsed: !test.collapsed } : test,
+        )
+    }
+
+    set allCollapsed(collapsed) {
+        this.renderData = { ...this.renderData, tests: [...this.renderData.tests.map((test) => (
+            { ...test, collapsed }
+        ))] }
+    }
+
+    get testSubset() {
+        return [...this.renderData.tests]
+    }
+
+    get environment() {
+        return this.renderData.environment
+    }
+
+    get initialSort() {
+        return this.data.initialSort
+    }
+}
+
+module.exports = {
+    manager: new DataManager(),
+}
+
+},{"./storage.js":8}],2:[function(require,module,exports){
+const mediaViewer = require('./mediaviewer.js')
+const templateEnvRow = document.getElementById('template_environment_row')
+const templateResult = document.getElementById('template_results-table__tbody')
+
+function htmlToElements(html) {
+    const temp = document.createElement('template')
+    temp.innerHTML = html
+    return temp.content.childNodes
+}
+
+const find = (selector, elem) => {
+    if (!elem) {
+        elem = document
+    }
+    return elem.querySelector(selector)
+}
+
+const findAll = (selector, elem) => {
+    if (!elem) {
+        elem = document
+    }
+    return [...elem.querySelectorAll(selector)]
+}
+
+const dom = {
+    getStaticRow: (key, value) => {
+        const envRow = templateEnvRow.content.cloneNode(true)
+        const isObj = typeof value === 'object' && value !== null
+        const values = isObj ? Object.keys(value).map((k) => `${k}: ${value[k]}`) : null
+
+        const valuesElement = htmlToElements(
+            values ? `<ul>${values.map((val) => `<li>${val}</li>`).join('')}<ul>` : `<div>${value}</div>`)[0]
+        const td = findAll('td', envRow)
+        td[0].textContent = key
+        td[1].appendChild(valuesElement)
+
+        return envRow
+    },
+    getResultTBody: ({ testId, id, log, extras, resultsTableRow, tableHtml, result, collapsed }) => {
+        const resultBody = templateResult.content.cloneNode(true)
+        resultBody.querySelector('tbody').classList.add(result.toLowerCase())
+        resultBody.querySelector('tbody').id = testId
+        resultBody.querySelector('.collapsible').dataset.id = id
+
+        resultsTableRow.forEach((html) => {
+            const t = document.createElement('template')
+            t.innerHTML = html
+            resultBody.querySelector('.collapsible').appendChild(t.content)
+        })
+
+        if (log) {
+            // Wrap lines starting with "E" with span.error to color those lines red
+            const wrappedLog = log.replace(/^E.*$/gm, (match) => `<span class="error">${match}</span>`)
+            resultBody.querySelector('.log').innerHTML = wrappedLog
+        } else {
+            resultBody.querySelector('.log').remove()
+        }
+
+        if (collapsed) {
+            resultBody.querySelector('.collapsible > .col-result')?.classList.add('collapsed')
+            resultBody.querySelector('.extras-row').classList.add('hidden')
+        } else {
+            resultBody.querySelector('.collapsible > .col-result')?.classList.remove('collapsed')
+        }
+
+        const media = []
+        extras?.forEach(({ name, format_type, content }) => {
+            if (['image', 'video'].includes(format_type)) {
+                media.push({ path: content, name, format_type })
+            }
+
+            if (format_type === 'html') {
+                resultBody.querySelector('.extraHTML').insertAdjacentHTML('beforeend', `<div>${content}</div>`)
+            }
+        })
+        mediaViewer.setup(resultBody, media)
+
+        // Add custom html from the pytest_html_results_table_html hook
+        tableHtml?.forEach((item) => {
+            resultBody.querySelector('td[class="extra"]').insertAdjacentHTML('beforeend', item)
+        })
+
+        return resultBody
+    },
+}
+
+module.exports = {
+    dom,
+    htmlToElements,
+    find,
+    findAll,
+}
+
+},{"./mediaviewer.js":6}],3:[function(require,module,exports){
+const { manager } = require('./datamanager.js')
+const { doSort } = require('./sort.js')
+const storageModule = require('./storage.js')
+
+const getFilteredSubSet = (filter) =>
+    manager.allData.tests.filter(({ result }) => filter.includes(result.toLowerCase()))
+
+const doInitFilter = () => {
+    const currentFilter = storageModule.getVisible()
+    const filteredSubset = getFilteredSubSet(currentFilter)
+    manager.setRender(filteredSubset)
+}
+
+const doFilter = (type, show) => {
+    if (show) {
+        storageModule.showCategory(type)
+    } else {
+        storageModule.hideCategory(type)
+    }
+
+    const currentFilter = storageModule.getVisible()
+    const filteredSubset = getFilteredSubSet(currentFilter)
+    manager.setRender(filteredSubset)
+
+    const sortColumn = storageModule.getSort()
+    doSort(sortColumn, true)
+}
+
+module.exports = {
+    doFilter,
+    doInitFilter,
+}
+
+},{"./datamanager.js":1,"./sort.js":7,"./storage.js":8}],4:[function(require,module,exports){
+const { redraw, bindEvents, renderStatic } = require('./main.js')
+const { doInitFilter } = require('./filter.js')
+const { doInitSort } = require('./sort.js')
+const { manager } = require('./datamanager.js')
+const data = JSON.parse(document.getElementById('data-container').dataset.jsonblob)
+
+function init() {
+    manager.setManager(data)
+    doInitFilter()
+    doInitSort()
+    renderStatic()
+    redraw()
+    bindEvents()
+}
+
+init()
+
+},{"./datamanager.js":1,"./filter.js":3,"./main.js":5,"./sort.js":7}],5:[function(require,module,exports){
+const { dom, find, findAll } = require('./dom.js')
+const { manager } = require('./datamanager.js')
+const { doSort } = require('./sort.js')
+const { doFilter } = require('./filter.js')
+const {
+    getVisible,
+    getCollapsedIds,
+    setCollapsedIds,
+    getSort,
+    getSortDirection,
+    possibleFilters,
+} = require('./storage.js')
+
+const removeChildren = (node) => {
+    while (node.firstChild) {
+        node.removeChild(node.firstChild)
+    }
+}
+
+const renderStatic = () => {
+    const renderEnvironmentTable = () => {
+        const environment = manager.environment
+        const rows = Object.keys(environment).map((key) => dom.getStaticRow(key, environment[key]))
+        const table = document.getElementById('environment')
+        removeChildren(table)
+        rows.forEach((row) => table.appendChild(row))
+    }
+    renderEnvironmentTable()
+}
+
+const addItemToggleListener = (elem) => {
+    elem.addEventListener('click', ({ target }) => {
+        const id = target.parentElement.dataset.id
+        manager.toggleCollapsedItem(id)
+
+        const collapsedIds = getCollapsedIds()
+        if (collapsedIds.includes(id)) {
+            const updated = collapsedIds.filter((item) => item !== id)
+            setCollapsedIds(updated)
+        } else {
+            collapsedIds.push(id)
+            setCollapsedIds(collapsedIds)
+        }
+        redraw()
+    })
+}
+
+const renderContent = (tests) => {
+    const sortAttr = getSort(manager.initialSort)
+    const sortAsc = JSON.parse(getSortDirection())
+    const rows = tests.map(dom.getResultTBody)
+    const table = document.getElementById('results-table')
+    const tableHeader = document.getElementById('results-table-head')
+
+    const newTable = document.createElement('table')
+    newTable.id = 'results-table'
+
+    // remove all sorting classes and set the relevant
+    findAll('.sortable', tableHeader).forEach((elem) => elem.classList.remove('asc', 'desc'))
+    tableHeader.querySelector(`.sortable[data-column-type="${sortAttr}"]`)?.classList.add(sortAsc ? 'desc' : 'asc')
+    newTable.appendChild(tableHeader)
+
+    if (!rows.length) {
+        const emptyTable = document.getElementById('template_results-table__body--empty').content.cloneNode(true)
+        newTable.appendChild(emptyTable)
+    } else {
+        rows.forEach((row) => {
+            if (!!row) {
+                findAll('.collapsible td:not(.col-links', row).forEach(addItemToggleListener)
+                find('.logexpander', row).addEventListener('click',
+                    (evt) => evt.target.parentNode.classList.toggle('expanded'),
+                )
+                newTable.appendChild(row)
+            }
+        })
+    }
+
+    table.replaceWith(newTable)
+}
+
+const renderDerived = () => {
+    const currentFilter = getVisible()
+    possibleFilters.forEach((result) => {
+        const input = document.querySelector(`input[data-test-result="${result}"]`)
+        input.checked = currentFilter.includes(result)
+    })
+}
+
+const bindEvents = () => {
+    const filterColumn = (evt) => {
+        const { target: element } = evt
+        const { testResult } = element.dataset
+
+        doFilter(testResult, element.checked)
+        const collapsedIds = getCollapsedIds()
+        const updated = manager.renderData.tests.map((test) => {
+            return {
+                ...test,
+                collapsed: collapsedIds.includes(test.id),
+            }
+        })
+        manager.setRender(updated)
+        redraw()
+    }
+
+    const header = document.getElementById('environment-header')
+    header.addEventListener('click', () => {
+        const table = document.getElementById('environment')
+        table.classList.toggle('hidden')
+        header.classList.toggle('collapsed')
+    })
+
+    findAll('input[name="filter_checkbox"]').forEach((elem) => {
+        elem.addEventListener('click', filterColumn)
+    })
+
+    findAll('.sortable').forEach((elem) => {
+        elem.addEventListener('click', (evt) => {
+            const { target: element } = evt
+            const { columnType } = element.dataset
+            doSort(columnType)
+            redraw()
+        })
+    })
+
+    document.getElementById('show_all_details').addEventListener('click', () => {
+        manager.allCollapsed = false
+        setCollapsedIds([])
+        redraw()
+    })
+    document.getElementById('hide_all_details').addEventListener('click', () => {
+        manager.allCollapsed = true
+        const allIds = manager.renderData.tests.map((test) => test.id)
+        setCollapsedIds(allIds)
+        redraw()
+    })
+}
+
+const redraw = () => {
+    const { testSubset } = manager
+
+    renderContent(testSubset)
+    renderDerived()
+}
+
+module.exports = {
+    redraw,
+    bindEvents,
+    renderStatic,
+}
+
+},{"./datamanager.js":1,"./dom.js":2,"./filter.js":3,"./sort.js":7,"./storage.js":8}],6:[function(require,module,exports){
+class MediaViewer {
+    constructor(assets) {
+        this.assets = assets
+        this.index = 0
+    }
+
+    nextActive() {
+        this.index = this.index === this.assets.length - 1 ? 0 : this.index + 1
+        return [this.activeFile, this.index]
+    }
+
+    prevActive() {
+        this.index = this.index === 0 ? this.assets.length - 1 : this.index -1
+        return [this.activeFile, this.index]
+    }
+
+    get currentIndex() {
+        return this.index
+    }
+
+    get activeFile() {
+        return this.assets[this.index]
+    }
+}
+
+
+const setup = (resultBody, assets) => {
+    if (!assets.length) {
+        resultBody.querySelector('.media').classList.add('hidden')
+        return
+    }
+
+    const mediaViewer = new MediaViewer(assets)
+    const container = resultBody.querySelector('.media-container')
+    const leftArrow = resultBody.querySelector('.media-container__nav--left')
+    const rightArrow = resultBody.querySelector('.media-container__nav--right')
+    const mediaName = resultBody.querySelector('.media__name')
+    const counter = resultBody.querySelector('.media__counter')
+    const imageEl = resultBody.querySelector('img')
+    const sourceEl = resultBody.querySelector('source')
+    const videoEl = resultBody.querySelector('video')
+
+    const setImg = (media, index) => {
+        if (media?.format_type === 'image') {
+            imageEl.src = media.path
+
+            imageEl.classList.remove('hidden')
+            videoEl.classList.add('hidden')
+        } else if (media?.format_type === 'video') {
+            sourceEl.src = media.path
+
+            videoEl.classList.remove('hidden')
+            imageEl.classList.add('hidden')
+        }
+
+        mediaName.innerText = media?.name
+        counter.innerText = `${index + 1} / ${assets.length}`
+    }
+    setImg(mediaViewer.activeFile, mediaViewer.currentIndex)
+
+    const moveLeft = () => {
+        const [media, index] = mediaViewer.prevActive()
+        setImg(media, index)
+    }
+    const doRight = () => {
+        const [media, index] = mediaViewer.nextActive()
+        setImg(media, index)
+    }
+    const openImg = () => {
+        window.open(mediaViewer.activeFile.path, '_blank')
+    }
+    if (assets.length === 1) {
+        container.classList.add('media-container--fullscreen')
+    } else {
+        leftArrow.addEventListener('click', moveLeft)
+        rightArrow.addEventListener('click', doRight)
+    }
+    imageEl.addEventListener('click', openImg)
+}
+
+module.exports = {
+    setup,
+}
+
+},{}],7:[function(require,module,exports){
+const { manager } = require('./datamanager.js')
+const storageModule = require('./storage.js')
+
+const genericSort = (list, key, ascending, customOrder) => {
+    let sorted
+    if (customOrder) {
+        sorted = list.sort((a, b) => {
+            const aValue = a.result.toLowerCase()
+            const bValue = b.result.toLowerCase()
+
+            const aIndex = customOrder.findIndex((item) => item.toLowerCase() === aValue)
+            const bIndex = customOrder.findIndex((item) => item.toLowerCase() === bValue)
+
+            // Compare the indices to determine the sort order
+            return aIndex - bIndex
+        })
+    } else {
+        sorted = list.sort((a, b) => a[key] === b[key] ? 0 : a[key] > b[key] ? 1 : -1)
+    }
+
+    if (ascending) {
+        sorted.reverse()
+    }
+    return sorted
+}
+
+const durationSort = (list, ascending) => {
+    const parseDuration = (duration) => {
+        if (duration.includes(':')) {
+            // If it's in the format "HH:mm:ss"
+            const [hours, minutes, seconds] = duration.split(':').map(Number)
+            return (hours * 3600 + minutes * 60 + seconds) * 1000
+        } else {
+            // If it's in the format "nnn ms"
+            return parseInt(duration)
+        }
+    }
+    const sorted = list.sort((a, b) => parseDuration(a['duration']) - parseDuration(b['duration']))
+    if (ascending) {
+        sorted.reverse()
+    }
+    return sorted
+}
+
+const doInitSort = () => {
+    const type = storageModule.getSort(manager.initialSort)
+    const ascending = storageModule.getSortDirection()
+    const list = manager.testSubset
+    const initialOrder = ['Error', 'Failed', 'Rerun', 'XFailed', 'XPassed', 'Skipped', 'Passed']
+
+    storageModule.setSort(type)
+    storageModule.setSortDirection(ascending)
+
+    if (type?.toLowerCase() === 'original') {
+        manager.setRender(list)
+    } else {
+        let sortedList
+        switch (type) {
+        case 'duration':
+            sortedList = durationSort(list, ascending)
+            break
+        case 'result':
+            sortedList = genericSort(list, type, ascending, initialOrder)
+            break
+        default:
+            sortedList = genericSort(list, type, ascending)
+            break
+        }
+        manager.setRender(sortedList)
+    }
+}
+
+const doSort = (type, skipDirection) => {
+    const newSortType = storageModule.getSort(manager.initialSort) !== type
+    const currentAsc = storageModule.getSortDirection()
+    let ascending
+    if (skipDirection) {
+        ascending = currentAsc
+    } else {
+        ascending = newSortType ? false : !currentAsc
+    }
+    storageModule.setSort(type)
+    storageModule.setSortDirection(ascending)
+
+    const list = manager.testSubset
+    const sortedList = type === 'duration' ? durationSort(list, ascending) : genericSort(list, type, ascending)
+    manager.setRender(sortedList)
+}
+
+module.exports = {
+    doInitSort,
+    doSort,
+}
+
+},{"./datamanager.js":1,"./storage.js":8}],8:[function(require,module,exports){
+const possibleFilters = [
+    'passed',
+    'skipped',
+    'failed',
+    'error',
+    'xfailed',
+    'xpassed',
+    'rerun',
+]
+
+const getVisible = () => {
+    const url = new URL(window.location.href)
+    const settings = new URLSearchParams(url.search).get('visible')
+    const lower = (item) => {
+        const lowerItem = item.toLowerCase()
+        if (possibleFilters.includes(lowerItem)) {
+            return lowerItem
+        }
+        return null
+    }
+    return settings === null ?
+        possibleFilters :
+        [...new Set(settings?.split(',').map(lower).filter((item) => item))]
+}
+
+const hideCategory = (categoryToHide) => {
+    const url = new URL(window.location.href)
+    const visibleParams = new URLSearchParams(url.search).get('visible')
+    const currentVisible = visibleParams ? visibleParams.split(',') : [...possibleFilters]
+    const settings = [...new Set(currentVisible)].filter((f) => f !== categoryToHide).join(',')
+
+    url.searchParams.set('visible', settings)
+    window.history.pushState({}, null, unescape(url.href))
+}
+
+const showCategory = (categoryToShow) => {
+    if (typeof window === 'undefined') {
+        return
+    }
+    const url = new URL(window.location.href)
+    const currentVisible = new URLSearchParams(url.search).get('visible')?.split(',').filter(Boolean) ||
+        [...possibleFilters]
+    const settings = [...new Set([categoryToShow, ...currentVisible])]
+    const noFilter = possibleFilters.length === settings.length || !settings.length
+
+    noFilter ? url.searchParams.delete('visible') : url.searchParams.set('visible', settings.join(','))
+    window.history.pushState({}, null, unescape(url.href))
+}
+
+const getSort = (initialSort) => {
+    const url = new URL(window.location.href)
+    let sort = new URLSearchParams(url.search).get('sort')
+    if (!sort) {
+        sort = initialSort || 'result'
+    }
+    return sort
+}
+
+const setSort = (type) => {
+    const url = new URL(window.location.href)
+    url.searchParams.set('sort', type)
+    window.history.pushState({}, null, unescape(url.href))
+}
+
+const getCollapsedCategory = (renderCollapsed) => {
+    let categories
+    if (typeof window !== 'undefined') {
+        const url = new URL(window.location.href)
+        const collapsedItems = new URLSearchParams(url.search).get('collapsed')
+        switch (true) {
+        case !renderCollapsed && collapsedItems === null:
+            categories = ['passed']
+            break
+        case collapsedItems?.length === 0 || /^["']{2}$/.test(collapsedItems):
+            categories = []
+            break
+        case /^all$/.test(collapsedItems) || collapsedItems === null && /^all$/.test(renderCollapsed):
+            categories = [...possibleFilters]
+            break
+        default:
+            categories = collapsedItems?.split(',').map((item) => item.toLowerCase()) || renderCollapsed
+            break
+        }
+    } else {
+        categories = []
+    }
+    return categories
+}
+
+const getSortDirection = () => JSON.parse(sessionStorage.getItem('sortAsc')) || false
+const setSortDirection = (ascending) => sessionStorage.setItem('sortAsc', ascending)
+
+const getCollapsedIds = () => JSON.parse(sessionStorage.getItem('collapsedIds')) || []
+const setCollapsedIds = (list) => sessionStorage.setItem('collapsedIds', JSON.stringify(list))
+
+module.exports = {
+    getVisible,
+    hideCategory,
+    showCategory,
+    getCollapsedIds,
+    setCollapsedIds,
+    getSort,
+    setSort,
+    getSortDirection,
+    setSortDirection,
+    getCollapsedCategory,
+    possibleFilters,
+}
+
+},{}]},{},[4]);
+    </script>
+  </footer>
+  </body>
+</html>

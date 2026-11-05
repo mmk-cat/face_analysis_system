@@ -1,0 +1,12 @@
+{
+  "file": "C:\\Users\\LENOVO\\Desktop\\项目\\03_face_analysis_system\\reports\\jmeter_baseline_100.jtl",
+  "samples": 100,
+  "success": 100,
+  "failures": 0,
+  "error_rate_pct": 0.0,
+  "p50_ms": 1523.0,
+  "p90_ms": 1541.4,
+  "p95_ms": 1552.4,
+  "p99_ms": 1566.0,
+  "max_ms": 1566.0
+}

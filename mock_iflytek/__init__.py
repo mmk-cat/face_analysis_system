@@ -1,0 +1,1 @@
+"""Mock iFlytek package."""

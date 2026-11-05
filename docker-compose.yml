@@ -1,0 +1,38 @@
+services:
+  mock-iflytek:
+    build: .
+    command: ["python", "-m", "mock_iflytek.run", "--port", "5100", "--latency-ms", "100"]
+    ports:
+      - "5100:5100"
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://127.0.0.1:5100/health', timeout=2)"]
+      interval: 5s
+      timeout: 3s
+      retries: 12
+
+  face-api:
+    build: .
+    environment:
+      APP_ENV: docker
+      API_KEY: dev-service-key
+      PROVIDER_MODE: iflytek
+      IFLYTEK_BASE_URL: http://mock-iflytek:5100
+      IFLYTEK_APP_ID: demo-app
+      IFLYTEK_API_KEY: demo-api-key
+      FACE_DB_PATH: /app/runtime/face.db
+      ALLOWED_ORIGINS: http://localhost:3000
+    ports:
+      - "5003:5003"
+    depends_on:
+      mock-iflytek:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://127.0.0.1:5003/health', timeout=2)"]
+      interval: 5s
+      timeout: 3s
+      retries: 12
+    volumes:
+      - face-data:/app/runtime
+
+volumes:
+  face-data:

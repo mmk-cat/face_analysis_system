@@ -1,0 +1,228 @@
+{
+  "info": {
+    "_postman_id": "8e0f4d1a-6f9a-4d4d-9d65-face2026demo",
+    "name": "Face Analysis System - 5 APIs",
+    "description": "面部检测、属性分析、1:1 比对、1:N 检索、人脸注册。上传字段均为 multipart/form-data；业务接口需要 X-API-Key。",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "variable": [
+    {
+      "key": "base_url",
+      "value": "http://127.0.0.1:5003"
+    },
+    {
+      "key": "api_key",
+      "value": "dev-service-key"
+    },
+    {
+      "key": "face_a",
+      "value": "data/samples/face_a.png"
+    },
+    {
+      "key": "face_b",
+      "value": "data/samples/face_b.png"
+    },
+    {
+      "key": "group_id",
+      "value": "demo-group"
+    }
+  ],
+  "item": [
+    {
+      "name": "0. Health (ops)",
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": {
+          "raw": "{{base_url}}/health",
+          "host": ["{{base_url}}"],
+          "path": ["health"]
+        }
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test('health 200', () => pm.response.to.have.status(200));",
+              "pm.test('provider is visible', () => pm.expect(pm.response.json().provider).to.be.a('string'));"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "1. Detect face",
+      "request": {
+        "method": "POST",
+        "header": [
+          {"key": "X-API-Key", "value": "{{api_key}}"},
+          {"key": "Idempotency-Key", "value": "{{$guid}}"}
+        ],
+        "body": {
+          "mode": "formdata",
+          "formdata": [
+            {"key": "image", "type": "file", "src": "{{face_a}}"}
+          ]
+        },
+        "url": {
+          "raw": "{{base_url}}/api/v1/face/detect",
+          "host": ["{{base_url}}"],
+          "path": ["api", "v1", "face", "detect"]
+        }
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test('detect 200', () => pm.response.to.have.status(200));",
+              "pm.test('one face', () => pm.expect(pm.response.json().data.face_count).to.eql(1));"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "2. Analyze attributes",
+      "request": {
+        "method": "POST",
+        "header": [
+          {"key": "X-API-Key", "value": "{{api_key}}"},
+          {"key": "Idempotency-Key", "value": "{{$guid}}"}
+        ],
+        "body": {
+          "mode": "formdata",
+          "formdata": [
+            {"key": "image", "type": "file", "src": "{{face_a}}"},
+            {"key": "attributes", "value": "[\"age\",\"gender\",\"glasses\",\"mask\"]", "type": "text"}
+          ]
+        },
+        "url": {
+          "raw": "{{base_url}}/api/v1/face/analyze",
+          "host": ["{{base_url}}"],
+          "path": ["api", "v1", "face", "analyze"]
+        }
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test('analyze 200', () => pm.response.to.have.status(200));",
+              "pm.test('face attributes', () => pm.expect(pm.response.json().data.face).to.be.an('object'));"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "3. Compare 1:1",
+      "request": {
+        "method": "POST",
+        "header": [
+          {"key": "X-API-Key", "value": "{{api_key}}"},
+          {"key": "Idempotency-Key", "value": "{{$guid}}"}
+        ],
+        "body": {
+          "mode": "formdata",
+          "formdata": [
+            {"key": "image_a", "type": "file", "src": "{{face_a}}"},
+            {"key": "image_b", "type": "file", "src": "{{face_a}}"}
+          ]
+        },
+        "url": {
+          "raw": "{{base_url}}/api/v1/face/compare",
+          "host": ["{{base_url}}"],
+          "path": ["api", "v1", "face", "compare"]
+        }
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test('compare 200', () => pm.response.to.have.status(200));",
+              "pm.test('same person', () => pm.expect(pm.response.json().data.same_person).to.eql(true));"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "4. Register person",
+      "request": {
+        "method": "POST",
+        "header": [
+          {"key": "X-API-Key", "value": "{{api_key}}"},
+          {"key": "Idempotency-Key", "value": "{{$guid}}"}
+        ],
+        "body": {
+          "mode": "formdata",
+          "formdata": [
+            {"key": "image", "type": "file", "src": "{{face_a}}"},
+            {"key": "group_id", "value": "{{group_id}}", "type": "text"},
+            {"key": "person_id", "value": "P1001", "type": "text"},
+            {"key": "name", "value": "Demo User", "type": "text"}
+          ]
+        },
+        "url": {
+          "raw": "{{base_url}}/api/v1/face/register",
+          "host": ["{{base_url}}"],
+          "path": ["api", "v1", "face", "register"]
+        }
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test('register 201', () => pm.response.to.have.status(201));",
+              "pm.test('person persisted', () => pm.expect(pm.response.json().data.person_id).to.eql('P1001'));"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "5. Search 1:N",
+      "request": {
+        "method": "POST",
+        "header": [
+          {"key": "X-API-Key", "value": "{{api_key}}"},
+          {"key": "Idempotency-Key", "value": "{{$guid}}"}
+        ],
+        "body": {
+          "mode": "formdata",
+          "formdata": [
+            {"key": "image", "type": "file", "src": "{{face_a}}"},
+            {"key": "group_id", "value": "{{group_id}}", "type": "text"},
+            {"key": "top_k", "value": "5", "type": "text"}
+          ]
+        },
+        "url": {
+          "raw": "{{base_url}}/api/v1/face/search",
+          "host": ["{{base_url}}"],
+          "path": ["api", "v1", "face", "search"]
+        }
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test('search 200', () => pm.response.to.have.status(200));",
+              "pm.test('has matches', () => pm.expect(pm.response.json().data.matches).to.be.an('array'));"
+            ]
+          }
+        }
+      ]
+    }
+  ]
+}
